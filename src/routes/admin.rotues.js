@@ -1,7 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const adminController = require('../controllers/Api/v1/admin.controller');
-const authMiddleware = require('../middlewares/auth.middleware');
+const authController = require('../controllers/Api/v1/auth.controller');
+const auth = require('../middlewares/auth.middleware');
 
-router.get('/admin/auth/v1/profile/:id', authMiddleware, adminController.getAdminProfile);
+// Public Routes
+router.post('/register', authController.register);
+router.post('/login', authController.login);
+
+
+// Private Routes
+const privateRouter = express.Router();
+privateRouter.use(auth.adminAuth); // Correct middleware usage for admin authentication
+
+privateRouter.post('/refresh-token', authController.refreshUserToken);
+
+// Set prefix for private routes
+router.use('/auth/v1', privateRouter);
+
 module.exports = router;

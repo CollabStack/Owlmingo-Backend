@@ -1,6 +1,6 @@
 const jwtUtil = require('../utils/jwt.util');
 const User = require('../models/user.model');
-const { successResponse, errorResponse } = require('../controllers/Api/baseAPI.controller');
+const { errorResponse } = require('../controllers/Api/baseAPI.controller');
 
 const authMiddleware = (role) => {
     return async (req, res, next) => {
