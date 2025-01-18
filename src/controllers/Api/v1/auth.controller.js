@@ -8,10 +8,11 @@ register = async (req, res) => {
         const user = await authService.register(username, email, password, role);
         successResponse(res, user, 'User registered successfully');
     } catch (error) {
-        if (error.name === "SequelizeUniqueConstraintError") {
-            message = error.errors.map((e) => e.message);
-            errorResponse(res, message);
-        } else {
+        if (error.name === "ValidationError") {
+            const errors = Object.values(error.errors).map((e) => e.message);
+            errorResponse(res, errors);
+        }
+        else {
             errorResponse(res, error);
         }
     }
