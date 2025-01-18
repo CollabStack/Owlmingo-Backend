@@ -6,13 +6,13 @@ const authMiddleware = (role) => {
     return async (req, res, next) => {
         try {
             const token = req.header('Authorization')?.replace('Bearer ', '');
-
             if (!token) {
                 errorResponse(res, 'Token not provided');
             }
 
-            const decoded = jwtUtil.verifyToken(token);  // verify the token
-            const user = await User.findOne({ where: { global_id: decoded.global_id } });
+            const decoded = jwtUtil.verifyToken(token);
+            const global_id = decoded.global_id; // Extract the global_id from the decoded token
+            const user = await User.findOne({global_id });
 
             if (!user) {
                 errorResponse(res, 'User not found');
