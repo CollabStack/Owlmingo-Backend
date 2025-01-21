@@ -44,14 +44,7 @@ const userSchema = new mongoose.Schema(
             return /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(value);
           },
           message: "Please provide a valid email address",
-        },
-        {
-          validator: async function (value) {
-            const user = await mongoose.models.User.findOne({ email: value });
-            return !user;
-          },
-          message: "Email already exists",
-        },
+        }
       ],
     },
     password: {
@@ -80,7 +73,23 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: false,
       unique: true
-    },  
+    },
+    otp: {
+      type: String,
+      required: false
+    },
+    otpExpires: {
+      type: Date,
+      required: false
+    },
+    otpAttempts: {
+      type: Number,
+      default: 0
+    },
+    isVerified: {
+      type: Boolean,
+      default: false
+    },
   },
   {
     timestamps: true, // Automatically add createdAt and updatedAt fields
