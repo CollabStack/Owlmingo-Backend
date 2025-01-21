@@ -19,7 +19,10 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.12.0",
     "mongoose": "^8.9.5",
+    "nodemailer": "^6.9.16",
+    "pdf-ocr": "^0.1.0",
     "sequelize": "^6.37.5",
+    "tesseract.js": "^6.0.0",
     "uuid": "^11.0.5"
   },
   "devDependencies": {

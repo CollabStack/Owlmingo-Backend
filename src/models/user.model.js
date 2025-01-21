@@ -80,7 +80,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: false,
       unique: true
-    },
+    },  
   },
   {
     timestamps: true, // Automatically add createdAt and updatedAt fields
