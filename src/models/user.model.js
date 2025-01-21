@@ -8,6 +8,14 @@ const userSchema = new mongoose.Schema(
       unique: true,
       default: uuidv4, // Automatically generate a UUID
     },
+    role: {
+      type: String,
+      enum: {
+        values: ["user", "admin"],
+        message: "Role must be either 'user' or 'admin'",
+      },
+      default: "user",
+    },
     username: {
       type: String,
       required: [true, "Username is required"],
@@ -28,7 +36,7 @@ const userSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      required: [true, "Email is required"],
+      required: false,
       unique: true,
       validate: [
         {
@@ -58,13 +66,20 @@ const userSchema = new mongoose.Schema(
         },
       ],
     },
-    role: {
+    google_id: {
       type: String,
-      enum: {
-        values: ["user", "admin"],
-        message: "Role must be either 'user' or 'admin'",
-      },
-      default: "user",
+      required: false,
+      unique: true,
+    },
+    telegram_id: {
+      type: String,
+      required: false,
+      unique: true
+    },
+    github_id: {
+      type: String,
+      required: false,
+      unique: true
     },
   },
   {

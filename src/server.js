@@ -15,8 +15,8 @@ const userRoutes = require("./routes/user.routes");
 const adminRoutes = require("./routes/admin.rotues");
 
 // Use Routes
-app.use("/api/user", userRoutes);
-app.use("/api/admin", adminRoutes);
+app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/admin", adminRoutes);
 
 console.log(port);
 
