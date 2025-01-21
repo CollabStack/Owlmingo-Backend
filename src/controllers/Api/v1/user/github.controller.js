@@ -25,7 +25,7 @@ const githubCallback = (req, res, next) => {
             if (!existingUser) {
                 // Create a new user if not found
                 existingUser = new User({
-                    githubId: user.id,
+                    github_id: user.id,
                     username: user.username,
                     email: user.emails[0].value, // Use the first email from GitHub
                 });
