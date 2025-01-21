@@ -2,11 +2,12 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/user.model');
 const jwtUtil = require('../utils/jwt.util');
 
+// register with email 
 register = async (username, email, password, role) => {
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
         // Pass `role` only if it is defined
-        const userData = { username, email, password: hashedPassword };
+        const userData = { username, email, password: hashedPassword};
         if (role) {
             userData.role = role;
         }

@@ -1,10 +1,10 @@
-const { successResponse, errorResponse } = require('../baseAPI.controller');
-const authService = require('../../../services/auth.service');
-const { refreshToken } = require('../../../utils/jwt.util');
+const { successResponse, errorResponse } = require('../../baseAPI.controller');
+const authService = require('../../../../services/auth.service');
+const { refreshToken } = require('../../../../utils/jwt.util');
 
 register = async (req, res) => {
     try {
-        const { username, email, password, role = null } = req.body;
+        const { username, email, password, role ='admin' } = req.body;
         const user = await authService.register(username, email, password, role);
         successResponse(res, user, 'User registered successfully');
     } catch (error) {
