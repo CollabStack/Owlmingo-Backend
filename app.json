@@ -1,0 +1,16 @@
+{
+    "formation": {
+      "web": {
+        "quantity": 1,
+        "size": "512mb"
+      }
+    },
+    "healthchecks": {
+      "web": {
+        "path": "/health",
+        "protocol": "http",
+        "port": 3001
+      }
+    }
+  }
+  
