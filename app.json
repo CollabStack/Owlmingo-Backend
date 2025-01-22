@@ -1,16 +1,21 @@
 {
+    "name": "owlmingo-app",
+    "version": "1.0.0",
+    "scripts": {
+      "start": "node server.js"
+    },
     "formation": {
       "web": {
         "quantity": 1,
         "size": "512mb"
       }
     },
-    "healthchecks": {
-      "web": {
+    "healthchecks": [
+      {
+        "type": "http",
         "path": "/health",
-        "protocol": "http",
         "port": 3001
       }
-    }
+    ]
   }
   
