@@ -1,6 +1,6 @@
 const express = require("express");
-const connectDB = require("./src/database");
-const { port } = require('./src/config/app.config');
+const connectDB = require("./database");
+const { port } = require('./config/app.config');
 
 const app = express();
 
@@ -11,8 +11,8 @@ app.use(express.json());
 connectDB();
 
 // Import Routes
-const userRoutes = require("./src/routes/user.routes");
-const adminRoutes = require("./src/routes/admin.rotues");
+const userRoutes = require("./routes/user.routes");
+const adminRoutes = require("./routes/admin.rotues");
 
 // Use Routes
 app.use("/api/v1/user", userRoutes);
