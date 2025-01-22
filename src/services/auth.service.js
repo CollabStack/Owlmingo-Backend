@@ -1,10 +1,10 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/user.model');
 const jwtUtil = require('../utils/jwt.util');
-const { sendOtpEmail } = require('../utils/email.util');
+const OtpService = require('./user/opt.service');
 
-const MAX_OTP_ATTEMPTS = 3;
-const OTP_EXPIRE_MINUTES = 10;
+const MAX_OTP_ATTEMPTS = 5;
+const OTP_EXPIRE_MINUTES = 3;
 
 // register with email 
 register = async (username, email, password, role) => {
@@ -22,14 +22,15 @@ register = async (username, email, password, role) => {
             userData.role = role;
         }
 
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        userData.otp = otp;
-        userData.otpExpires = new Date(Date.now() + OTP_EXPIRE_MINUTES * 60000);
-        userData.otpAttempts = 0;
-
         const user = await User.create(userData);
         if (email) {
-            await sendOtpEmail(email, otp);
+            try {
+                await OtpService.createOtp(user.global_id, email);
+            } catch (error) {
+                // If OTP sending fails, still create the user but log the error
+                console.error('OTP sending failed:', error);
+                throw new Error('User created but verification email failed. Please try resending OTP.');
+            }
         }
         return user;
     } catch (error) {
@@ -64,25 +65,9 @@ async function verifyOtp(email, enteredOtp) {
         throw 'Email already verified';
     }
 
-    if (user.otpAttempts >= MAX_OTP_ATTEMPTS) {
-        throw 'Too many attempts. Please request a new OTP';
-    }
-
-    if (Date.now() > user.otpExpires) {
-        throw 'OTP has expired. Please request a new one';
-    }
-
-    user.otpAttempts += 1;
-    await user.save();
-
-    if (user.otp !== enteredOtp) {
-        throw `Invalid OTP. ${MAX_OTP_ATTEMPTS - user.otpAttempts} attempts remaining`;
-    }
-
+    await OtpService.verifyOtp(user.global_id, enteredOtp);
+    
     user.isVerified = true;
-    user.otp = null;
-    user.otpExpires = null;
-    user.otpAttempts = 0;
     await user.save();
     return user;
 }
@@ -97,13 +82,7 @@ async function resendOtp(email) {
         throw 'Email already verified';
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    user.otp = otp;
-    user.otpExpires = new Date(Date.now() + OTP_EXPIRE_MINUTES * 60000);
-    user.otpAttempts = 0;
-    await user.save();
-    
-    await sendOtpEmail(email, otp);
+    await OtpService.resendOtp(user.global_id, email);
     return { message: 'New OTP sent successfully' };
 }
 
