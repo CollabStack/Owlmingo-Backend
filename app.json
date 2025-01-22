@@ -10,12 +10,12 @@
         "size": "512mb"
       }
     },
-    "healthchecks": [
-      {
+    "healthchecks": {
+      "web": {
         "type": "http",
         "path": "/health",
         "port": 3001
       }
-    ]
+    }
   }
   
