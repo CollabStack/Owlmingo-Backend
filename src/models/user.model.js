@@ -49,7 +49,7 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, "Password is required"],
+      required: [false, "Password is required"],
       validate: [
         {
           validator: function (value) {
@@ -61,18 +61,18 @@ const userSchema = new mongoose.Schema(
     },
     google_id: {
       type: String,
-      required: false,
       unique: true,
+      sparse: true, // Ensures unique constraint ignores null values
     },
     telegram_id: {
       type: String,
-      required: false,
-      unique: true
+      unique: true,
+      sparse: true, // Ensures unique constraint ignores null values
     },
     github_id: {
       type: String,
-      required: false,
-      unique: true
+      unique: true,
+      sparse: true, // Ensures unique constraint ignores null values
     },
     isVerified: {
       type: Boolean,
