@@ -8,6 +8,8 @@ const generateOTP = () => {
     return crypto.randomInt(100000, 999999).toString();
 };
 
+const MAX_RESET_OTP_ATTEMPTS = 3;
+
 exports.initiatePasswordReset = async (email) => {
     console.log('Searching for user with email:', email);
     
@@ -43,7 +45,6 @@ exports.initiatePasswordReset = async (email) => {
 };
 
 exports.verifyAndResetPassword = async (email, otp, newPassword) => {
-    // Changed to MongoDB query syntax
     const user = await User.findOne({ 
         email: email,
         isVerified: true
@@ -57,30 +58,38 @@ exports.verifyAndResetPassword = async (email, otp, newPassword) => {
         user_id: user.global_id 
     });
 
-    if (!otpRecord || otpRecord.otp !== otp) {
-        await UserOtp.updateOne(
-            { user_id: user.global_id },
-            { $inc: { attempts: 1 } }
-        );
-        throw new Error('Invalid OTP');
+    if (!otpRecord) {
+        throw new Error('No OTP request found. Please request a new OTP');
     }
 
     if (otpRecord.expires < new Date()) {
-        throw new Error('OTP has expired');
+        throw new Error('OTP has expired. Please request a new one');
     }
 
-    if (otpRecord.attempts >= 3) {
-        throw new Error('Too many attempts. Please request a new OTP');
+    if (otpRecord.attempts >= MAX_RESET_OTP_ATTEMPTS) {
+        await UserOtp.deleteOne({ user_id: user.global_id });
+        throw new Error('Maximum attempts exceeded. Please request a new OTP');
+    }
+
+    // Increment attempt count
+    otpRecord.attempts += 1;
+    await otpRecord.save();
+
+    const remainingAttempts = MAX_RESET_OTP_ATTEMPTS - otpRecord.attempts;
+
+    if (otpRecord.otp !== otp) {
+        const error = new Error(`Invalid OTP. ${remainingAttempts} attempts remaining`);
+        error.remainingAttempts = remainingAttempts;
+        throw error;
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    
-
     await User.updateOne(
         { _id: user._id },
         { $set: { password: hashedPassword } }
     );
 
+    // Delete OTP record after successful verification
     await UserOtp.deleteOne({ user_id: user.global_id });
     return { message: 'Password reset successful' };
 };

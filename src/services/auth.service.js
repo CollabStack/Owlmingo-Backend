@@ -44,6 +44,12 @@ login = async (email, password) => {
         if (!user) {
             throw 'User not found';
         }
+
+        // Add verification check
+        if (!user.isVerified) {
+            throw 'Please verify your email before logging in';
+        }
+
         const isValid = await bcrypt.compare(password, user.password);
         if (!isValid) {
             throw 'Invalid password';

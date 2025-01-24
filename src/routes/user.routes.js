@@ -12,23 +12,40 @@ router.post('/verify-otp', async (req, res) => {
         if (!email || !otp) {
             return res.status(400).json({ 
                 status: 'error',
-                message: 'Email and OTP are required' 
+                message: 'Email and OTP are required',
+                errorCode: 'MISSING_FIELDS'
             });
         }
+
         const user = await require('../services/auth.service').verifyOtp(email, otp);
         res.status(200).json({
             status: 'success',
             message: 'Email verified successfully',
-            user: {
+            data: {
                 username: user.username,
                 email: user.email,
                 isVerified: user.isVerified
             }
         });
     } catch (err) {
-        res.status(400).json({ 
+        const errorMessage = err.message || err;
+        const statusCode = errorMessage.includes('Invalid OTP') ? 401 : 400;
+        
+        // Extract remaining attempts from error message if available
+        const remainingAttempts = errorMessage.match(/(\d+) attempts remaining/);
+        
+        res.status(statusCode).json({ 
             status: 'error',
-            message: err 
+            message: errorMessage,
+            errorCode: errorMessage.includes('Invalid OTP') ? 'INVALID_OTP' : 
+                      errorMessage.includes('expired') ? 'OTP_EXPIRED' : 
+                      errorMessage.includes('Too many attempts') ? 'MAX_ATTEMPTS_REACHED' : 
+                      'VERIFICATION_FAILED',
+            data: {
+                remainingAttempts: remainingAttempts ? parseInt(remainingAttempts[1]) : undefined,
+                isLocked: errorMessage.includes('Too many attempts'),
+                canResend: errorMessage.includes('expired') || errorMessage.includes('Too many attempts')
+            }
         });
     }
 });
@@ -39,18 +56,26 @@ router.post('/resend-otp', async (req, res) => {
         if (!email) {
             return res.status(400).json({ 
                 status: 'error',
-                message: 'Email is required' 
+                message: 'Email is required',
+                errorCode: 'MISSING_EMAIL'
             });
         }
         const result = await require('../services/auth.service').resendOtp(email);
         res.status(200).json({
             status: 'success',
-            message: result.message
+            message: 'New OTP has been sent',
+            data: {
+                email: email,
+                expiresIn: '3 minutes',
+                maxAttempts: 5
+            }
         });
     } catch (err) {
         res.status(400).json({ 
             status: 'error',
-            message: err 
+            message: err.message || err,
+            errorCode: err.includes('verified') ? 'ALREADY_VERIFIED' :
+                      err.includes('not found') ? 'USER_NOT_FOUND' : 'OTP_SEND_FAILED'
         });
     }
 });
@@ -84,7 +109,8 @@ router.post('/reset-password', async (req, res) => {
         if (!email || !otp || !newPassword) {
             return res.status(400).json({
                 status: 'error',
-                message: 'Email, OTP, and new password are required'
+                message: 'Email, OTP, and new password are required',
+                errorCode: 'MISSING_FIELDS'
             });
         }
         const result = await require('../services/user/opt_reset_pass.service').verifyAndResetPassword(email, otp, newPassword);
@@ -93,9 +119,20 @@ router.post('/reset-password', async (req, res) => {
             message: result.message
         });
     } catch (err) {
-        res.status(400).json({
+        const statusCode = err.message.includes('Invalid OTP') ? 401 : 400;
+        res.status(statusCode).json({
             status: 'error',
-            message: err.message
+            message: err.message,
+            errorCode: err.message.includes('Maximum attempts exceeded') ? 'MAX_ATTEMPTS_REACHED' :
+                      err.message.includes('Invalid OTP') ? 'INVALID_OTP' :
+                      err.message.includes('expired') ? 'OTP_EXPIRED' : 'RESET_FAILED',
+            data: {
+                remainingAttempts: err.remainingAttempts,
+                isLocked: err.message.includes('Maximum attempts exceeded'),
+                canResend: err.message.includes('Maximum attempts exceeded') || 
+                          err.message.includes('expired') ||
+                          err.message.includes('No OTP request found')
+            }
         });
     }
 });
