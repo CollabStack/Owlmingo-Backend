@@ -55,7 +55,52 @@ router.post('/resend-otp', async (req, res) => {
     }
 });
 
-// Private Routes
+// Public Routes for password reset (no auth needed)
+router.post('/forget-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Email is required'
+            });
+        }
+        const result = await require('../services/user/opt_reset_pass.service').initiatePasswordReset(email);
+        res.status(200).json({
+            status: 'success',
+            message: result.message
+        });
+    } catch (err) {
+        res.status(400).json({
+            status: 'error',
+            message: err.message
+        });
+    }
+});
+
+router.post('/reset-password', async (req, res) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+        if (!email || !otp || !newPassword) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Email, OTP, and new password are required'
+            });
+        }
+        const result = await require('../services/user/opt_reset_pass.service').verifyAndResetPassword(email, otp, newPassword);
+        res.status(200).json({
+            status: 'success',
+            message: result.message
+        });
+    } catch (err) {
+        res.status(400).json({
+            status: 'error',
+            message: err.message
+        });
+    }
+});
+
+// Private Routes (need auth)
 const privateRouter = express.Router();
 privateRouter.use(userAuth); // Correct middleware usage for user authentication
 
