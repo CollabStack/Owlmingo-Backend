@@ -20,6 +20,7 @@ app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/admin", adminRoutes);
 
 console.log(port);
+const PORT = process.env.PORT || 3001;
 
 // Start server
 app.listen(port, () => {
