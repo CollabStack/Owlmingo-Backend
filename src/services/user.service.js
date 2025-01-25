@@ -1,3 +1,4 @@
+const bcrypt = require('bcrypt');
 const User = require('../models/user.model');
 
 exports.getUserProfile = async (global_id) => {
@@ -21,4 +22,7 @@ exports.getAllUsers = async () => {
         throw error;
     }
 
-}
+};
+
+module.exports = {
+};

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/Api/v1/user/auth.controller');
+const userController = require('../controllers/Api/v1/user/change_password.controller');
 const {userAuth} = require('../middlewares/auth.middleware');
 
 // Public Routes
@@ -80,7 +81,7 @@ router.post('/resend-otp', async (req, res) => {
     }
 });
 
-// Public Routes for password reset (no auth needed)
+// Public Routes for password reset 
 router.post('/forget-password', async (req, res) => {
     try {
         const { email } = req.body;
@@ -142,6 +143,7 @@ const privateRouter = express.Router();
 privateRouter.use(userAuth); // Correct middleware usage for user authentication
 
 privateRouter.post('/refresh-token', authController.refreshUserToken);
+privateRouter.post('/change-password', userController.changePassword);
 
 // Set prefix for private routes
 router.use('/auth', privateRouter);
