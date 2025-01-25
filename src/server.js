@@ -15,7 +15,7 @@ const userRoutes = require("./routes/user.routes");
 const adminRoutes = require("./routes/admin.rotues");
 
 // Use Routes
-app.get('/', (req, res) => {res.send('Welcome to Owlmingo 🦉');});
+app.get('/', (req, res) => {res.send('Welcome to Owlmingo000 🦉');});
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/admin", adminRoutes);
 
