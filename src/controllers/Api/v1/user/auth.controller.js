@@ -22,8 +22,10 @@ login = async (req, res) => {
         const token = await authService.login(email, password);
         successResponse(res, { token }, 'User logged in successfully');
     } catch (error) {
-        if (error.name === "SequelizeUniqueConstraintError") {
-            message = error.errors.map((e) => e.message);
+        if (error === 'Please verify your email before logging in') {
+            errorResponse(res, error, 403); // Using 403 Forbidden for unverified users
+        } else if (error.name === "SequelizeUniqueConstraintError") {
+            const message = error.errors.map((e) => e.message);
             errorResponse(res, message);
         } else {
             errorResponse(res, error);
