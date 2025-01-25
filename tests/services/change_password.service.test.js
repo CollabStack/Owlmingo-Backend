@@ -1,8 +1,12 @@
-const bcrypt = require('bcrypt');
+jest.mock('bcrypt', () => ({
+    compare: jest.fn(),
+    hash: jest.fn()
+}));
+
 const { changePassword } = require('../../src/services/user/change_password.service');
 const User = require('../../src/models/user.model');
+const bcrypt = require('bcrypt');
 
-jest.mock('bcrypt');
 jest.mock('../../src/models/user.model');
 
 describe('changePassword service', () => {
