@@ -30,7 +30,7 @@ describe('changePassword service', () => {
         expect(result).toEqual({ message: 'Password changed successfully' });
     });
 
-    it('should throw error if user not found', async () => {
+    it('should throw error if user not found!', async () => {
         User.findById.mockResolvedValue(null);
 
         await expect(changePassword('testUserId', 'oldPassword', 'newPassword'))
