@@ -12,16 +12,16 @@ connectDB();
 
 // Import Routes
 const userRoutes = require("./routes/user.routes");
-const adminRoutes = require("./routes/admin.rotues");
+const adminRoutes = require("./routes/admin.routes");
 
 // Use Routes
 app.get('/', (req, res) => {res.send('Hello, World!');});
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/admin", adminRoutes);
 
-console.log(port);
+const PORT = process.env.PORT || port;
 
 // Start server
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
