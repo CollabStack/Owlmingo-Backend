@@ -9,7 +9,7 @@ const OcrController = require('../controllers/Api/v1/user/ocr.controller');
 // Configure multer for image uploads
 const upload = multer({
     limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB max file size
+        fileSize: 150 * 1024 * 1024, // 150MB max file size
     },
     fileFilter: (req, file, cb) => {
         const allowedTypes = [
@@ -168,6 +168,7 @@ privateRouter.use(userAuth); // Correct middleware usage for user authentication
 privateRouter.post('/refresh-token', authController.refreshUserToken);
 privateRouter.post('/change-password', userController.changePassword);
 privateRouter.post('/process-file', upload.single('file'), OcrController.processFile);
+privateRouter.post('/process-text', OcrController.processText);
 
 // Set prefix for private routes
 router.use('/auth', privateRouter);

@@ -69,6 +69,27 @@ class OcrService {
             throw new Error(`File processing failed: ${error.message}`);
         }
     }
+
+    static async processText(text, userId, metadata) {
+        try {
+            const ocrRecord = await FileOcr.create({
+                userId,
+                extractedText: text,
+                confidence: 100,
+                fileType: FileTypes.TEXT,
+                metadata
+            });
+
+            return {
+                id: ocrRecord._id,
+                text: ocrRecord.extractedText,
+                confidence: 100,
+                fileType: FileTypes.TEXT
+            };
+        } catch (error) {
+            throw new Error(`Text processing failed: ${error.message}`);
+        }
+    }
 }
 
 module.exports = OcrService;

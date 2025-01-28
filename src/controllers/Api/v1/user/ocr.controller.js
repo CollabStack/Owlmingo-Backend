@@ -25,6 +25,30 @@ class OcrController {
             return errorResponse(res, error.message, 500);
         }
     }
+
+    static async processText(req, res) {
+        try {
+            if (!req.body.text) {
+                return errorResponse(res, 'Please provide text', 400);
+            }
+
+            const metadata = {
+                originalFileName: 'text_input.txt',
+                fileSize: req.body.text.length,
+                mimeType: 'text/plain'
+            };
+
+            const result = await OcrService.processText(
+                req.body.text,
+                req.user._id,
+                metadata
+            );
+            
+            return successResponse(res, 'Text processed successfully', result);
+        } catch (error) {
+            return errorResponse(res, error.message, 500);
+        }
+    }
 }
 
 module.exports = OcrController;
