@@ -29,6 +29,7 @@
     "passport": "^0.7.0",
     "passport-github2": "^0.1.12",
     "pdf-ocr": "^0.1.0",
+    "pdf.js-extract": "^0.2.1",
     "sequelize": "^6.37.5",
     "tesseract.js": "^6.0.0",
     "uuid": "^11.0.5"
