@@ -12,7 +12,7 @@ connectDB();
 
 // Import Routes
 const userRoutes = require("./routes/user.routes");
-const adminRoutes = require("./routes/admin.rotues");
+const adminRoutes = require("./routes/admin.routes");
 
 // Use Routes
 app.use("/api/v1/user", userRoutes);

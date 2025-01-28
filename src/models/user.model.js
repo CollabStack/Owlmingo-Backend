@@ -22,12 +22,6 @@ const userSchema = new mongoose.Schema(
       validate: [
         {
           validator: function (value) {
-            return /^[A-Za-z]+$/.test(value);
-          },
-          message: "Username must contain only letters",
-        },
-        {
-          validator: function (value) {
             return value.length >= 3 && value.length <= 20;
           },
           message: "Username must be between 3 and 20 characters long",
