@@ -13,4 +13,8 @@ module.exports = {
     doSpaceSecretKey: process.env.DO_SPACE_SECRET_KEY,
     doSpaceBucket   : process.env.DO_SPACE_BUCKET,
     doSpaceRegion   : process.env.DO_SPACE_REGION,
+    clientID        : process.env.GITHUB_CLIENT_ID,
+    clientSecret    : process.env.GITHUB_CLIENT_SECRET,
+    githubCallbackURL: process.env.GITHUB_CALLBACK_URL,
+    redirectURL     : process.env.REDIRECT_URL,
 };
