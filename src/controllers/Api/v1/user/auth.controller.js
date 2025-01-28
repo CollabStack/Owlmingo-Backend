@@ -6,15 +6,13 @@ register = async (req, res) => {
     try {
         const { username, email, password, role ='user'} = req.body;
         const user = await authService.register(username, email, password, role);
-        successResponse(res, user, 'User registered successfully');
+        successResponse(res, {
+            username: user.username,
+            email: user.email,
+            isVerified: user.isVerified
+        }, 'Registration successful. Please check your email for OTP.');
     } catch (error) {
-        if (error.name === "ValidationError") {
-            const errors = Object.values(error.errors).map((e) => e.message);
-            errorResponse(res, errors);
-        }
-        else {
-            errorResponse(res, error);
-        }
+        errorResponse(res, error.message || 'Registration failed');
     }
 };
 
@@ -24,8 +22,10 @@ login = async (req, res) => {
         const token = await authService.login(email, password);
         successResponse(res, { token }, 'User logged in successfully');
     } catch (error) {
-        if (error.name === "SequelizeUniqueConstraintError") {
-            message = error.errors.map((e) => e.message);
+        if (error === 'Please verify your email before logging in') {
+            errorResponse(res, error, 403); // Using 403 Forbidden for unverified users
+        } else if (error.name === "SequelizeUniqueConstraintError") {
+            const message = error.errors.map((e) => e.message);
             errorResponse(res, message);
         } else {
             errorResponse(res, error);
