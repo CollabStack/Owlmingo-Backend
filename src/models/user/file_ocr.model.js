@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const FileTypes = {
     DOC: 'doc',
     PDF: 'pdf',
-    IMAGE: 'jpg',
+    IMAGE: 'image',
     TEXT: 'text',
     OTHER: 'other'
 };
