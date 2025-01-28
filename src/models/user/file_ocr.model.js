@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 
 const FileTypes = {
     DOC: 'doc',
+    DOCX: 'docx',
+    PPTX: 'pptx',
     PDF: 'pdf',
     IMAGE: 'image',
     TEXT: 'text',

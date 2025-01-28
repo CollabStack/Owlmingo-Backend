@@ -12,11 +12,17 @@ const upload = multer({
         fileSize: 10 * 1024 * 1024, // 10MB max file size
     },
     fileFilter: (req, file, cb) => {
-        const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+        const allowedTypes = [
+            'image/jpeg',
+            'image/png',
+            'application/pdf',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+        ];
         if (allowedTypes.includes(file.mimetype)) {
             cb(null, true);
         } else {
-            cb(new Error('Only images (JPEG/PNG) and PDF files are allowed'));
+            cb(new Error('Only images (JPEG/PNG), PDF, DOCX, and PPTX files are allowed'));
         }
     }
 });
