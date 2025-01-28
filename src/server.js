@@ -12,7 +12,7 @@ connectDB();
 
 // Import Routes
 const userRoutes = require("./routes/user.routes");
-const adminRoutes = require("./routes/admin.rotues");
+const adminRoutes = require("./routes/admin.routes");
 
 // Use Routes
 app.get('/', (req, res) => {res.send('Welcome to Owlmingo 🦉 Bro Jeat King of the Lok 😂');});
