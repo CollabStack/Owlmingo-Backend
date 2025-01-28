@@ -38,14 +38,7 @@ const userSchema = new mongoose.Schema(
             return /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(value);
           },
           message: "Please provide a valid email address",
-        },
-        {
-          validator: async function (value) {
-            const user = await mongoose.models.User.findOne({ email: value });
-            return !user;
-          },
-          message: "Email already exists",
-        },
+        }
       ],
     },
     password: {
@@ -74,6 +67,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       unique: true,
       sparse: true, // Ensures unique constraint ignores null values
+    },
+    isVerified: {
+      type: Boolean,
+      default: false
     },
   },
   {

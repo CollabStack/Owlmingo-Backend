@@ -32,11 +32,14 @@ connectDB();
 const userRoutes = require("./routes/user.routes");
 const adminRoutes = require("./routes/admin.routes");
 
-// API Routes
+// Use Routes
+app.get('/', (req, res) => {res.send('Welcome to Owlmingo 🦉 Bro Jeat King of the Lok 😂');});
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/admin", adminRoutes);
 
-// Start Server
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+const PORT = process.env.PORT || port;
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
