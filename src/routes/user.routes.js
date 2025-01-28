@@ -1,8 +1,24 @@
 const express = require('express');
+const multer = require('multer');
 const router = express.Router();
 const authController = require('../controllers/Api/v1/user/auth.controller');
 const userController = require('../controllers/Api/v1/user/change_password.controller');
 const {userAuth} = require('../middlewares/auth.middleware');
+const OcrController = require('../controllers/Api/v1/user/ocr.controller');
+
+// Configure multer for image uploads
+const upload = multer({
+    limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB max file size
+    },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed'));
+        }
+    }
+});
 
 // Public Routes
 router.post('/register', authController.register);
@@ -144,6 +160,7 @@ privateRouter.use(userAuth); // Correct middleware usage for user authentication
 
 privateRouter.post('/refresh-token', authController.refreshUserToken);
 privateRouter.post('/change-password', userController.changePassword);
+privateRouter.post('/process-image', upload.single('image'), OcrController.processImage);
 
 // Set prefix for private routes
 router.use('/auth', privateRouter);

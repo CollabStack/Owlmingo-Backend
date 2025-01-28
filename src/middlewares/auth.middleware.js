@@ -7,24 +7,26 @@ const authMiddleware = (role) => {
         try {
             const token = req.header('Authorization')?.replace('Bearer ', '');
             if (!token) {
-                errorResponse(res, 'Token not provided');
+                return errorResponse(res, 'Token not provided', 401);
             }
 
             const decoded = jwtUtil.verifyToken(token);
-            const global_id = decoded.global_id; // Extract the global_id from the decoded token
-            const user = await User.findOne({global_id });
+            const global_id = decoded.global_id;
+            const user = await User.findOne({ global_id });
 
             if (!user) {
-                errorResponse(res, 'User not found');
+                return errorResponse(res, 'User not found', 401);
             }
 
             if (user.role !== role) {
-                errorResponse(res, 'Forbidden');
+                return errorResponse(res, 'Forbidden', 403);
             }
 
+            // Attach the user object to the request
+            req.user = user;
             next();
         } catch (error) {
-            errorResponse(res, error.message);
+            return errorResponse(res, error.message, 401);
         }
     };
 };
