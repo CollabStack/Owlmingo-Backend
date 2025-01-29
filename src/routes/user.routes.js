@@ -5,16 +5,21 @@ const {uploadFile} = require('../controllers/Api/v1/user/file.controller');
 const userController = require('../controllers/Api/v1/user/change_password.controller');
 const {userAuth} = require('../middlewares/auth.middleware');
 const {githubLogin, githubCallback, githubSuccess} = require('../controllers/Api/v1/user/github.controller');
+const { googleLogin, googleCallback, googleSuccess } = require('../controllers/Api/v1/user/google.controller');
 const { uploadMiddleware } = require('../middlewares/file_upload.middleware');
 
 // Public Routes
 router.post('/register', authController.register);
 router.post('/login', authController.login);
-// GitHub login route
+// GitHub Auth routes
 router.get('/github', githubLogin);
-
-// GitHub callback route
 router.get('/github/callback', githubCallback, githubSuccess);
+// Google Auth Routes
+// Google Auth routes
+router.get('/google', googleLogin);
+router.get('/google/callback', googleCallback, googleSuccess);
+
+
 router.post('/verify-otp', async (req, res) => {
     try {
         const { email, otp } = req.body;
