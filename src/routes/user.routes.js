@@ -1,12 +1,38 @@
 const express = require('express');
+const multer = require('multer');
 const router = express.Router();
 const authController = require('../controllers/Api/v1/user/auth.controller');
 const {uploadFile} = require('../controllers/Api/v1/user/file.controller');
 const userController = require('../controllers/Api/v1/user/change_password.controller');
 const {userAuth} = require('../middlewares/auth.middleware');
+<<<<<<< HEAD
+const OcrController = require('../controllers/Api/v1/user/ocr.controller');
+
+// Configure multer for image uploads
+const upload = multer({
+    limits: {
+        fileSize: 150 * 1024 * 1024, // 150MB max file size
+    },
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = [
+            'image/jpeg',
+            'image/png',
+            'application/pdf',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+        ];
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only images (JPEG/PNG), PDF, DOCX, and PPTX files are allowed'));
+        }
+    }
+});
+=======
 const {githubLogin, githubCallback, githubSuccess} = require('../controllers/Api/v1/user/github.controller');
 const { googleLogin, googleCallback, googleSuccess } = require('../controllers/Api/v1/user/google.controller');
 const { uploadMiddleware } = require('../middlewares/file_upload.middleware');
+>>>>>>> 96004c901d36e4cc739669f68f3924a5bd540a8a
 
 // Public Routes
 router.post('/register', authController.register);
@@ -158,6 +184,8 @@ privateRouter.use(userAuth); // Correct middleware usage for user authentication
 privateRouter.post('/refresh-token', authController.refreshUserToken);
 privateRouter.post('/upload-file/:id', uploadMiddleware, uploadFile);
 privateRouter.post('/change-password', userController.changePassword);
+privateRouter.post('/process-file', upload.single('file'), OcrController.processFile);
+privateRouter.post('/process-text', OcrController.processText);
 
 // Set prefix for private routes
 router.use('/auth', privateRouter);
