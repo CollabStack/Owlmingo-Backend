@@ -2,10 +2,8 @@ const express = require('express');
 const multer = require('multer');
 const router = express.Router();
 const authController = require('../controllers/Api/v1/user/auth.controller');
-const {uploadFile} = require('../controllers/Api/v1/user/file.controller');
 const userController = require('../controllers/Api/v1/user/change_password.controller');
 const {userAuth} = require('../middlewares/auth.middleware');
-<<<<<<< HEAD
 const OcrController = require('../controllers/Api/v1/user/ocr.controller');
 
 // Configure multer for image uploads
@@ -28,24 +26,10 @@ const upload = multer({
         }
     }
 });
-=======
-const {githubLogin, githubCallback, githubSuccess} = require('../controllers/Api/v1/user/github.controller');
-const { googleLogin, googleCallback, googleSuccess } = require('../controllers/Api/v1/user/google.controller');
-const { uploadMiddleware } = require('../middlewares/file_upload.middleware');
->>>>>>> 96004c901d36e4cc739669f68f3924a5bd540a8a
 
 // Public Routes
 router.post('/register', authController.register);
 router.post('/login', authController.login);
-// GitHub Auth routes
-router.get('/github', githubLogin);
-router.get('/github/callback', githubCallback, githubSuccess);
-// Google Auth Routes
-// Google Auth routes
-router.get('/google', googleLogin);
-router.get('/google/callback', googleCallback, googleSuccess);
-
-
 router.post('/verify-otp', async (req, res) => {
     try {
         const { email, otp } = req.body;
@@ -182,7 +166,6 @@ const privateRouter = express.Router();
 privateRouter.use(userAuth); // Correct middleware usage for user authentication
 
 privateRouter.post('/refresh-token', authController.refreshUserToken);
-privateRouter.post('/upload-file/:id', uploadMiddleware, uploadFile);
 privateRouter.post('/change-password', userController.changePassword);
 privateRouter.post('/process-file', upload.single('file'), OcrController.processFile);
 privateRouter.post('/process-text', OcrController.processText);
