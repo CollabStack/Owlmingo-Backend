@@ -1,53 +1,61 @@
-const mongoose = require("mongoose");
-const { v4: uuidv4 } = require("uuid");
+const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
+const FileTypes = {
+    DOC: 'doc',
+    DOCX: 'docx',
+    PPTX: 'pptx',
+    PDF: 'pdf',
+    IMAGE: 'image',
+    TEXT: 'text',
+    OTHER: 'other'
+};
 
-const fileSchema = new mongoose.Schema(
-  {
-    global_id: {
-      type: String,
-      unique: true,
-      default: uuidv4, // Automatically generate a UUID
-    },
-    url: {
-      type: String,
-      required: true,
-      required: false,
-    },
-    data: {
-      type: String,
-      required: false,
-    },
-    type: {
-      type: String,
-      required: true,
-      enum: [
-        "doc",
-        "docx",
-        "txt",
-        "rtf",
-        "odt",
-        "md",
-        "pdf",
-        "jpg",
-        "jpeg",
-        "png",
-        "gif",
-        "bmp",
-        "tiff",
-        "tif",
-        "webp",
-        "svg",
-      ],
-      required: true,
+const fileSchema = new mongoose.Schema({
+    global_id:{
+        type: String,
+        unique: true,
+        default: uuidv4
     },
     user_id: {
-      type: String,
-      required: true,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+        index: true
     },
-  },
-  {
-    timestamps: true, // Automatically add createdAt and updatedAt fields
-  }
-);
+    url: {
+        type: String,
+        required: false // Optional until cloud storage is implemented
+    },
+    data: {
+        type: String,
+        required: true
+    },
+    type: {
+        type: String,
+        enum: Object.values(FileTypes),
+        default: FileTypes.IMAGE
+    },
+    confidence: {
+        type: Number,
+        min: 0,
+        max: 100
+    },
+    metadata: {
+        originalFileName: String,
+        fileSize: Number,
+        mimeType: String
+    }
+}, {
+    timestamps: true // Adds createdAt and updatedAt fields
+});
 
-module.exports = mongoose.model("File", fileSchema);
+// Add indexes for common queries
+fileSchema.index({ user_id: 1, createdAt: -1 });
+fileSchema.index({ type: 1 });
+
+const File = mongoose.model('File', fileSchema);
+
+module.exports = {
+    File,
+    FileTypes
+};
