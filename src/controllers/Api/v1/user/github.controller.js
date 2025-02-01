@@ -11,15 +11,11 @@ const githubCallback = (req, res, next) => {
         if (err) {
             return next(err); // Handle any Passport-specific errors
         }
-        // if (!user) {
-        //     return res.redirect('http://localhost:3001'); // Redirect if authentication fails
-        // }
+
         if (!user) {
             return res.status(401).send('Authentication failed: User not found');
         }
         try {
-            console.log("GitHub User:", user);
-
             // Check if the user already exists in the database
             let existingUser = await User.findOne({ githubId: user.id });
             if (!existingUser) {
@@ -40,7 +36,6 @@ const githubCallback = (req, res, next) => {
                 return res.redirect(redirectURL); // Redirect to success URL
             });
         } catch (error) {
-            console.error("Error in GitHub Callback:", error);
             return next(error); // Pass the error to the error-handling middleware
         }
     })(req, res, next); // Invoke Passport's authenticate function

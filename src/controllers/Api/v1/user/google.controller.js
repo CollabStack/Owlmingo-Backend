@@ -37,7 +37,6 @@ const googleCallback = (req, res, next) => {
       const token = jwtUtil.generateToken({ global_id: existingUser.global_id, role: existingUser.role });
       return res.redirect(`${redirectURL}?token=${token}`);
     } catch (error) {
-      console.error("Error in Google Callback:", error);
       return next(error); // Pass the error to the error-handling middleware
     }
   })(req, res, next); // Invoke Passport's authenticate function

@@ -100,7 +100,6 @@ Help Center Privacy Terms`
     const info = await transporter.sendMail(mailOptions);
     return info;
   } catch (error) {
-    console.error('Detailed email error:', error);
     throw new Error(`Failed to send verification email: ${error.message}`);
   }
 };
@@ -187,7 +186,6 @@ Help Center Privacy Terms`
     const info = await transporter.sendMail(mailOptions);
     return info;
   } catch (error) {
-    console.error('Reset password email error:', error);
     throw new Error(`Failed to send reset password email: ${error.message}`);
   }
 };

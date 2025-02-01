@@ -1,8 +1,7 @@
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const { doSpaceEndpoint, doSpaceAccessKey, doSpaceSecretKey } = require('../config/app.config');
-const File = require('../models/file.model');
-// src\models\file.model.js
-console.log("File",File);
+const { doSpaceBucket } = require('../config/app.config');
+
 // Create an S3 client
 const s3Client = new S3Client({
     endpoint: doSpaceEndpoint,
@@ -14,10 +13,11 @@ const s3Client = new S3Client({
 });
 
 // Function to upload a file
-const uploadFile = async (fileBuffer, fileName, bucketName, user_global_id) => {
+const uploadFile = async (fileBuffer, fileName) => {
     const filePermissions = 'public-read';
     // const filePermissions = 'private';
 
+    const bucketName = doSpaceBucket;
     const params = {
         Bucket: bucketName,
         Key: fileName,
@@ -36,11 +36,8 @@ const uploadFile = async (fileBuffer, fileName, bucketName, user_global_id) => {
 
         // Insert a record in the database file table
         const url = `${doSpaceEndpoint}/${bucketName}/${fileName}`;
-        const fileExtension = fileName.split('.').pop();
-        const fileData = await File.create({ url, type: fileExtension, user_id: user_global_id }); // Use await here
-        return fileData;
+        return url;
     } catch (error) {
-        console.error("Error uploading file or saving to database:", error);
         throw error; // Re-throw the error to handle it in the controller
     }
 };

@@ -1,5 +1,5 @@
 const User = require('../../models/user.model');
-const UserOtp = require('../../models/user/user_otp_model');
+const UserOtp = require('../../models/user_otp.model');
 const { sendResetPasswordEmail } = require('../../utils/email.util');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
@@ -11,7 +11,6 @@ const generateOTP = () => {
 const MAX_RESET_OTP_ATTEMPTS = 3;
 
 exports.initiatePasswordReset = async (email) => {
-    console.log('Searching for user with email:', email);
     
    const user = await User.findOne({ 
         email: email,
@@ -19,11 +18,8 @@ exports.initiatePasswordReset = async (email) => {
     });
 
     if (!user) {
-        console.log('User not found or not verified:', email);
         throw new Error('User not found or not verified');
     }
-
-    console.log('User found:', user.email);
     
     const otp = generateOTP();
     const expiryTime = new Date(Date.now() + 3 * 60 * 1000); // 3 minutes
@@ -37,8 +33,6 @@ exports.initiatePasswordReset = async (email) => {
         },
         { upsert: true, new: true }
     );
-
-    console.log('OTP created:', otpDoc);
 
     await sendResetPasswordEmail(email, otp);
     return { message: 'Password reset OTP sent successfully' };
