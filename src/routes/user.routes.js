@@ -6,7 +6,7 @@ const userController = require('../controllers/Api/v1/user/change_password.contr
 const {userAuth} = require('../middlewares/auth.middleware');
 const OcrController = require('../controllers/Api/v1/user/ocr.controller');
 const { uploadMiddleware } = require('../middlewares/file_upload.middleware');
-
+const { getPlans, getPlan } = require('../controllers/Api/v1/user/plan.controller');
 // Public Routes
 router.post('/register', authController.register);
 router.post('/login', authController.login);
@@ -140,6 +140,9 @@ router.post('/reset-password', async (req, res) => {
         });
     }
 });
+
+router.get('/plans', getPlans);
+router.get('/plans/:id', getPlan);
 
 // Private Routes (need auth)
 const privateRouter = express.Router();
