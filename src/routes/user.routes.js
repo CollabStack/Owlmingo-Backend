@@ -5,6 +5,8 @@ const authController = require('../controllers/Api/v1/user/auth.controller');
 const userController = require('../controllers/Api/v1/user/change_password.controller');
 const {userAuth} = require('../middlewares/auth.middleware');
 const OcrController = require('../controllers/Api/v1/user/ocr.controller');
+const authService = require('../services/auth.service');
+const resetPasswordService = require('../services/user/opt_reset_pass.service');
 
 // Configure multer for image uploads
 const upload = multer({
@@ -33,15 +35,7 @@ router.post('/login', authController.login);
 router.post('/verify-otp', async (req, res) => {
     try {
         const { email, otp } = req.body;
-        if (!email || !otp) {
-            return res.status(400).json({ 
-                status: 'error',
-                message: 'Email and OTP are required',
-                errorCode: 'MISSING_FIELDS'
-            });
-        }
-
-        const user = await require('../services/auth.service').verifyOtp(email, otp);
+        const user = await authService.verifyOtp(email, otp);
         res.status(200).json({
             status: 'success',
             message: 'Email verified successfully',
@@ -55,9 +49,6 @@ router.post('/verify-otp', async (req, res) => {
         const errorMessage = err.message || err;
         const statusCode = errorMessage.includes('Invalid OTP') ? 401 : 400;
         
-        // Extract remaining attempts from error message if available
-        const remainingAttempts = errorMessage.match(/(\d+) attempts remaining/);
-        
         res.status(statusCode).json({ 
             status: 'error',
             message: errorMessage,
@@ -66,7 +57,7 @@ router.post('/verify-otp', async (req, res) => {
                       errorMessage.includes('Too many attempts') ? 'MAX_ATTEMPTS_REACHED' : 
                       'VERIFICATION_FAILED',
             data: {
-                remainingAttempts: remainingAttempts ? parseInt(remainingAttempts[1]) : undefined,
+                remainingAttempts: err.remainingAttempts,
                 isLocked: errorMessage.includes('Too many attempts'),
                 canResend: errorMessage.includes('expired') || errorMessage.includes('Too many attempts')
             }
@@ -76,20 +67,12 @@ router.post('/verify-otp', async (req, res) => {
 
 router.post('/resend-otp', async (req, res) => {
     try {
-        const { email } = req.body;
-        if (!email) {
-            return res.status(400).json({ 
-                status: 'error',
-                message: 'Email is required',
-                errorCode: 'MISSING_EMAIL'
-            });
-        }
-        const result = await require('../services/auth.service').resendOtp(email);
+        const result = await authService.resendOtp(req.body.email);
         res.status(200).json({
             status: 'success',
             message: 'New OTP has been sent',
             data: {
-                email: email,
+                email: req.body.email,
                 expiresIn: '3 minutes',
                 maxAttempts: 5
             }
@@ -98,23 +81,15 @@ router.post('/resend-otp', async (req, res) => {
         res.status(400).json({ 
             status: 'error',
             message: err.message || err,
-            errorCode: err.includes('verified') ? 'ALREADY_VERIFIED' :
-                      err.includes('not found') ? 'USER_NOT_FOUND' : 'OTP_SEND_FAILED'
+            errorCode: err.message.includes('verified') ? 'ALREADY_VERIFIED' :
+                      err.message.includes('not found') ? 'USER_NOT_FOUND' : 'OTP_SEND_FAILED'
         });
     }
 });
 
-// Public Routes for password reset 
 router.post('/forget-password', async (req, res) => {
     try {
-        const { email } = req.body;
-        if (!email) {
-            return res.status(400).json({
-                status: 'error',
-                message: 'Email is required'
-            });
-        }
-        const result = await require('../services/user/opt_reset_pass.service').initiatePasswordReset(email);
+        const result = await resetPasswordService.initiatePasswordReset(req.body.email);
         res.status(200).json({
             status: 'success',
             message: result.message
@@ -130,14 +105,7 @@ router.post('/forget-password', async (req, res) => {
 router.post('/reset-password', async (req, res) => {
     try {
         const { email, otp, newPassword } = req.body;
-        if (!email || !otp || !newPassword) {
-            return res.status(400).json({
-                status: 'error',
-                message: 'Email, OTP, and new password are required',
-                errorCode: 'MISSING_FIELDS'
-            });
-        }
-        const result = await require('../services/user/opt_reset_pass.service').verifyAndResetPassword(email, otp, newPassword);
+        const result = await resetPasswordService.verifyAndResetPassword(email, otp, newPassword);
         res.status(200).json({
             status: 'success',
             message: result.message

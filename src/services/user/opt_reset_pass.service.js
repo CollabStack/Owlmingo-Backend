@@ -11,6 +11,10 @@ const generateOTP = () => {
 const MAX_RESET_OTP_ATTEMPTS = 3;
 
 exports.initiatePasswordReset = async (email) => {
+    if (!email) {
+        throw new Error('Email is required');
+    }
+
     console.log('Searching for user with email:', email);
     
    const user = await User.findOne({ 
@@ -45,6 +49,10 @@ exports.initiatePasswordReset = async (email) => {
 };
 
 exports.verifyAndResetPassword = async (email, otp, newPassword) => {
+    if (!email || !otp || !newPassword) {
+        throw new Error('Email, OTP, and new password are required');
+    }
+
     const user = await User.findOne({ 
         email: email,
         isVerified: true
