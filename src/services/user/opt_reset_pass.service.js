@@ -1,7 +1,7 @@
 const User = require('../../models/user.model');
 const UserOtp = require('../../models/user/user_otp_model');
 const { sendResetPasswordEmail } = require('../../utils/email.util');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs'); // Changed from 'bcrypt' to 'bcryptjs'
 const crypto = require('crypto');
 
 const generateOTP = () => {
