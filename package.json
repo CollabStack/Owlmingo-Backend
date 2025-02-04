@@ -10,7 +10,7 @@
     "test": "jest",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "heroku-postbuild": "npm install --only=prod"
+    "heroku-postbuild": "npm install --production=false"
   },
   "keywords": [],
   "author": "",
