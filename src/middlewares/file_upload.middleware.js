@@ -1,35 +1,37 @@
 const multer = require('multer');
 
-// Allowed file types
-const allowedTypes = [
-    'image/jpeg',
-    'image/png',
-    'application/pdf',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-];
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, '/tmp')
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    cb(null, file.fieldname + '-' + uniqueSuffix)
+  }
+});
 
-// Memory storage configuration
-const storage = multer.memoryStorage();
-
-// File filter function
 const fileFilter = (req, file, cb) => {
+    const allowedTypes = [
+        'image/jpeg',
+        'image/png',
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    ];
+    
     if (allowedTypes.includes(file.mimetype)) {
         cb(null, true);
     } else {
-        cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', file), false);
+        cb(new Error('Invalid file type'), false);
     }
 };
 
-// Multer upload middleware configuration
 const uploadMiddleware = multer({
-    storage,
+    storage: storage,
     limits: {
-        fileSize: 150 * 1024 * 1024, // 150MB max file size
+        fileSize: 150 * 1024 * 1024, // 150MB
     },
-    fileFilter
-}).single('file'); // Adjust field name as necessary
+    fileFilter: fileFilter
+}).single('file');
 
-module.exports = {
-    uploadMiddleware
-};
+module.exports = { uploadMiddleware };
