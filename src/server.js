@@ -5,8 +5,12 @@ const passport = require("./config/passport.config");
 const connectDB = require("./database");
 const { port, mongoUri } = require("./config/app.config");
 const crypto = require("crypto");
+const cors = require('cors');
 
 const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
+
+// Enable CORS
+app.use(cors());
 
 // Initialize Express App
 const app = express();
