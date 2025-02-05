@@ -46,7 +46,7 @@ const adminRoutes = require("./routes/admin.routes");
 
 // Use Routes
 app.get('/', (req, res) => {
-  res.send('Welcome to Owlmingo 🦉 Bro Jeat King of the Lok 😂');
+  res.send('Welcome to Owlmingo 🦉 Bro Sann is the King 👑');
 });
 
 app.use("/api/v1/user", userRoutes);
