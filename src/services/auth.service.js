@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/user.model');
 const jwtUtil = require('../utils/jwt.util');
 const OtpService = require('./user/opt.service');
+const UserOtp = require('../models/user/user_otp_model');
 
 const MAX_OTP_ATTEMPTS = 5;
 const OTP_EXPIRE_MINUTES = 3;
@@ -62,6 +63,10 @@ login = async (email, password) => {
 }
 
 async function verifyOtp(email, enteredOtp) {
+    if (!email || !enteredOtp) {
+        throw new Error('Email and OTP are required');
+    }
+
     const user = await User.findOne({ email });
     if (!user) {
         throw 'User not found';
@@ -79,6 +84,10 @@ async function verifyOtp(email, enteredOtp) {
 }
 
 async function resendOtp(email) {
+    if (!email) {
+        throw new Error('Email is required');
+    }
+
     const user = await User.findOne({ email });
     if (!user) {
         throw 'User not found';
