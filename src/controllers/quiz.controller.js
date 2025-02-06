@@ -4,6 +4,7 @@ const { FileOcr } = require('../models/user/file_ocr.model');
 const ollamaService = require('../services/ollama.service');
 const { v4: uuidv4 } = require('uuid');
 const Quiz = require('../models/quiz.model');
+const QuizSession = require('../models/quiz.session.model'); // Add this import
 
 // Function to create a new question
 exports.createQuestion = async (req, res) => {
@@ -62,6 +63,29 @@ exports.generateQuiz = async (req, res) => {
 
     await quiz.save();
 
+    // Create a new quiz session
+    const quizSession = new QuizSession({
+      _id: quizId, // Use the same UUID as the quiz
+      user: {
+        _id: req.user._id,
+        name: req.user.username
+      },
+      source: {
+        fileOcrId: fileOcr._id,
+        fileName: fileOcr.metadata?.originalFileName,
+        fileType: fileOcr.fileType
+      },
+      quiz: {
+        totalQuestions: generatedQuiz.questions.length,
+        answeredCount: 0,
+        correctCount: 0,
+        score: 0
+      },
+      status: 'not_started'
+    });
+
+    await quizSession.save();
+
     // Format questions for response
     const formattedQuestions = quiz.questions.map((q, index) => ({
       questionIndex: index,
@@ -79,7 +103,12 @@ exports.generateQuiz = async (req, res) => {
       questionCount: quiz.questions.length,
       fileType: fileOcr.fileType,
       fileName: fileOcr.metadata?.originalFileName,
-      questions: formattedQuestions
+      questions: formattedQuestions,
+      session: {
+        status: quizSession.status,
+        progress: quizSession.progress,
+        startedAt: quizSession.startedAt
+      }
     });
   } catch (error) {
     console.error('Quiz generation error:', error);
@@ -116,6 +145,57 @@ exports.getQuestionsByQuizId = async (req, res) => {
     });
   } catch (error) {
     res.status(500).send({ message: 'Error fetching questions', error: error.message });
+  }
+};
+
+// Function to get user's quiz sessions
+exports.getUserQuizSessions = async (req, res) => {
+  try {
+    const { status, sort = '-startedAt' } = req.query;
+    
+    let query = { 'user._id': req.user._id };
+    if (status) {
+      query.status = status;
+    }
+
+    const sessions = await QuizSession.find(query)
+      .sort(sort)
+      .select('-progress.answers');
+
+    res.status(200).send({
+      count: sessions.length,
+      sessions: sessions
+    });
+  } catch (error) {
+    res.status(500).send({ 
+      message: 'Error fetching quiz sessions', 
+      error: error.message 
+    });
+  }
+};
+
+// Function to get specific quiz session
+exports.getQuizSession = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    
+    const session = await QuizSession.findById(sessionId);
+    
+    if (!session) {
+      return res.status(404).send({ message: 'Quiz session not found' });
+    }
+
+    // Ensure user can only access their own sessions
+    if (session.user._id.toString() !== req.user._id.toString()) {
+      return res.status(403).send({ message: 'Unauthorized access to this quiz session' });
+    }
+
+    res.status(200).send(session);
+  } catch (error) {
+    res.status(500).send({ 
+      message: 'Error fetching quiz session', 
+      error: error.message 
+    });
   }
 };
 

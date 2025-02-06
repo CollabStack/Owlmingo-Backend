@@ -66,6 +66,8 @@ privateRouter.post('/process-file', upload.single('file'), OcrController.process
 privateRouter.post('/process-text', OcrController.processText);
 
 // Quiz Routes
+privateRouter.get('/quiz/sessions/:sessionId', quizController.getQuizSession);
+privateRouter.get('/quiz/sessions', quizController.getUserQuizSessions);
 privateRouter.post('/quiz/generate', quizController.generateQuiz);
 privateRouter.get('/quiz/:quizId/questions', quizController.getQuestionsByQuizId);
 privateRouter.post('/quiz/questions', quizController.createQuestion);
