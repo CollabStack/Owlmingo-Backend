@@ -1,29 +1,46 @@
 const express = require("express");
-const session = require("express-session"); // Import express-session
-const passport = require("./config/passport.config"); // Import Passport config
+const session = require("express-session");
+const MongoStore = require("connect-mongo");
+const passport = require("./config/passport.config");
 const connectDB = require("./database");
-const { port,  } = require("./config/app.config");
+const { port, mongoUri } = require("./config/app.config");
 const crypto = require("crypto");
-const sessionSecret = crypto.randomBytes(32).toString("hex");
+const cors = require('cors');
 
-// Initialize Express App
+// Initialize Express App first
 const app = express();
+
+// Session secret
+const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
+
+// Enable CORS
+app.use(cors());
 
 // Middleware
 app.use(express.json());
 
-// Initialize session middleware
+// Initialize session middleware with MongoDB store
 app.use(
   session({
-    secret: sessionSecret, // Replace with a strong secret
+    secret: sessionSecret,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI || mongoUri,
+      collectionName: 'sessions',
+      ttl: 24 * 60 * 60, // Session TTL (1 day)
+      autoRemove: 'native' // Use MongoDB's TTL index
+    }),
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000 // 1 day
+    }
   })
 );
 
 // Initialize Passport middleware
 app.use(passport.initialize());
-app.use(passport.session()); // Enable session support
+app.use(passport.session());
 
 // Database Connection
 connectDB();
@@ -33,7 +50,10 @@ const userRoutes = require("./routes/user.routes");
 const adminRoutes = require("./routes/admin.routes");
 
 // Use Routes
-app.get('/', (req, res) => {res.send('Welcome to Owlmingo 🦉 Bro Jeat King of the Lok 😂');});
+app.get('/', (req, res) => {
+  res.send('Welcome to Owlmingo 🦉 Bro Sann is the King 👑');
+});
+
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/admin", adminRoutes);
 

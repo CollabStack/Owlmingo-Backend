@@ -1,0 +1,119 @@
+{
+  "info": {
+    "_postman_id": "your-generated-id",
+    "name": "Owlmingo Quiz Testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Process File",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/user/auth/process-file",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "user", "auth", "process-file"]
+        }
+      }
+    },
+    {
+      "name": "2. Generate Quiz",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"fileOcrId\": \"{{fileOcrId}}\",\n    \"extractedText\": \"{{extractedText}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/user/auth/quiz/generate",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "user", "auth", "quiz", "generate"]
+        }
+      }
+    },
+    {
+      "name": "3. Get Quiz Questions",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/user/auth/quiz/{{quizId}}/questions",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "user", "auth", "quiz", "{{quizId}}", "questions"]
+        }
+      }
+    },
+    {
+      "name": "4. Submit Answer",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"quiz_id\": \"{{quizId}}\",\n    \"question_id\": \"{{questionId}}\",\n    \"selected_options\": [\"option1\"],\n    \"is_correct\": true\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/user/auth/quiz/answers",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "user", "auth", "quiz", "answers"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "jwt_token",
+      "value": "your_jwt_token_here"
+    }
+  ]
+}
