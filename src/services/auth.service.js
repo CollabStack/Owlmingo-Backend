@@ -56,7 +56,7 @@ login = async (email, password) => {
             throw 'Invalid password';
         }
         const token = jwtUtil.generateToken({ global_id: user.global_id, role: user.role });
-        return token;
+        return {token, user};
     } catch (error) {
         throw error; // Pass the error up to the controller
     }

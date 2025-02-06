@@ -19,8 +19,8 @@ register = async (req, res) => {
 login = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const token = await authService.login(email, password);
-        successResponse(res, { token }, 'User logged in successfully');
+        const {token, user} = await authService.login(email, password);
+        successResponse(res, {token, user}, 'User logged in successfully');
     } catch (error) {
         if (error === 'Please verify your email before logging in') {
             errorResponse(res, error, 403); // Using 403 Forbidden for unverified users

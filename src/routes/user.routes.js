@@ -9,27 +9,8 @@ const authService = require('../services/auth.service');
 const resetPasswordService = require('../services/user/opt_reset_pass.service');
 const OtpService = require('../services/user/otp.service');
 const quizController = require('../controllers/quiz.controller');
-
-// Configure multer for image uploads
-const upload = multer({
-    limits: {
-        fileSize: 150 * 1024 * 1024, // 150MB max file size
-    },
-    fileFilter: (req, file, cb) => {
-        const allowedTypes = [
-            'image/jpeg',
-            'image/png',
-            'application/pdf',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-        ];
-        if (allowedTypes.includes(file.mimetype)) {
-            cb(null, true);
-        } else {
-            cb(new Error('Only images (JPEG/PNG), PDF, DOCX, and PPTX files are allowed'));
-        }
-    }
-});
+const { uploadMiddleware } = require('../middlewares/file_upload.middleware');
+const { getPlans, getPlan } = require('../controllers/Api/v1/user/plan.controller');
 
 // Public Routes
 router.post('/register', authController.register);
@@ -56,13 +37,17 @@ router.post('/reset-password', async (req, res) => {
     res.status(result.statusCode).json(result);
 });
 
+router.get('/plans', getPlans);
+router.get('/plans/:id', getPlan);
+
 // Private Routes (need auth)
 const privateRouter = express.Router();
 privateRouter.use(userAuth); // Correct middleware usage for user authentication
 
 privateRouter.post('/refresh-token', authController.refreshUserToken);
 privateRouter.post('/change-password', userController.changePassword);
-privateRouter.post('/process-file', upload.single('file'), OcrController.processFile);
+
+privateRouter.post('/process-file', uploadMiddleware, OcrController.processFile);
 privateRouter.post('/process-text', OcrController.processText);
 
 // Quiz Routes

@@ -1,4 +1,4 @@
-const UserOtp = require('../../models/user/user_otp_model');
+const UserOtp = require('../../models/user_otp.model');
 const { sendOtpEmail } = require('../../utils/email.util');
 
 const MAX_OTP_ATTEMPTS = 5;

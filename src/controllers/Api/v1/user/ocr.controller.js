@@ -1,6 +1,7 @@
-const OcrService = require('../../../../services/user/ocr.service');
+const OcrService = require('../../../../services/ocr.service');
 const { successResponse, errorResponse } = require('../../baseAPI.controller');
-
+const {uploadFile} = require('../../../../services/upload_file.service');
+const File = require('../../../../models/file.model');
 class OcrController {
     static async processFile(req, res) {
         try {
@@ -8,19 +9,23 @@ class OcrController {
                 return errorResponse(res, 'Please upload a file', 400);
             }
 
+            const file = req.file;
+            const userId = req.user._id;
+            const fileName = `owlmingo/${userId}/${Date.now()}-${file.originalname}`;
+            
             const metadata = {
-                originalFileName: req.file.originalname,
-                fileSize: req.file.size,
-                mimeType: req.file.mimetype
+                originalFileName: file.originalname,
+                fileSize: file.size,
+                mimeType: file.mimetype
             };
 
-            const result = await OcrService.processFile(
-                req.file.buffer,
-                req.user._id,
-                metadata
-            );
-            
-            return successResponse(res, 'File processed successfully', result);
+            // Upload file first, then process OCR
+            const fileUrl = await uploadFile(file.buffer, fileName);
+
+            // Run OCR processing with fileUrl
+            const ocrResult = await OcrService.processFile(file.buffer, userId, metadata, fileUrl);
+
+            return successResponse(res, ocrResult, 'File uploaded & processed successfully');
         } catch (error) {
             return errorResponse(res, error.message, 500);
         }
@@ -44,7 +49,7 @@ class OcrController {
                 metadata
             );
             
-            return successResponse(res, 'Text processed successfully', result);
+            return successResponse(res, result, 'Text processed successfully');
         } catch (error) {
             return errorResponse(res, error.message, 500);
         }

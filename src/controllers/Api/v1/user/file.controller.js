@@ -10,7 +10,7 @@ const uploadFileHandler = async (req, res) => {
         if (!file) {
             return errorResponse(res, 'No file uploaded', 400);
         }
-
+        
         const fileBuffer = file.buffer;
         const fileName = `owlmingo/${user_global_id}/${Date.now()}-${file.originalname}`;
         const bucketName = doSpaceBucket;
