@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/user.model');
 const jwtUtil = require('../utils/jwt.util');
 const OtpService = require('./user/opt.service');
-const UserOtp = require('../models/user/user_otp_model');
+const UserOtp = require('../models/user_otp.model');
 
 const MAX_OTP_ATTEMPTS = 5;
 const OTP_EXPIRE_MINUTES = 3;

@@ -1,5 +1,5 @@
 const User = require('../../models/user.model');
-const UserOtp = require('../../models/user/user_otp_model');
+const UserOtp = require('../../models/user_otp.model');
 const { sendResetPasswordEmail } = require('../../utils/email.util');
 const bcrypt = require('bcryptjs'); // Changed from 'bcrypt' to 'bcryptjs'
 const crypto = require('crypto');
