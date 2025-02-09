@@ -14,13 +14,20 @@ const app = express();
 const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
 
 // Enable CORS
-app.use(cors());
+// app.use(cors());
 // app.use(cors({
 //   origin: "*", // This allows all origins
 //   credentials: true, // Allows cookies to be sent
 //   methods: ["GET", "POST", "PUT"],
 //   allowedHeaders: ["Content-Type", "Authorization"],
 // }));
+app.use(
+  cors({
+    origin: "*", // Allows all origins
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 // Middleware
 app.use(express.json());
