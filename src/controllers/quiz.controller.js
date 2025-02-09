@@ -1,6 +1,6 @@
 const Question = require('../models/quiz.model');
 const Answer = require('../models/answer.model');
-const { FileOcr } = require('../models/user/file_ocr.model');
+const { File } = require('../models/file.model'); // Updated import
 const ollamaService = require('../services/ollama.service');
 const { v4: uuidv4 } = require('uuid');
 const Quiz = require('../models/quiz.model');
@@ -35,14 +35,14 @@ exports.generateQuiz = async (req, res) => {
       return res.status(400).send({ message: 'FileOcrId is required' });
     }
 
-    // Fetch the FileOcr document
-    const fileOcr = await FileOcr.findById(fileOcrId);
+    // Fetch the File document (correct model import)
+    const fileOcr = await File.findById(fileOcrId);
     if (!fileOcr) {
-      return res.status(404).send({ message: 'FileOcr not found' });
+      return res.status(404).send({ message: 'File not found' });
     }
 
-    // Check if the file belongs to the requesting user
-    if (fileOcr.userId.toString() !== req.user._id.toString()) {
+    // Check if the file belongs to the requesting user using correct field name
+    if (fileOcr.user_id.toString() !== req.user._id.toString()) {
       return res.status(403).send({ message: 'Unauthorized access to this file' });
     }
 

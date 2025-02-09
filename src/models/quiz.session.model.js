@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const quizSessionSchema = new mongoose.Schema({
-    _id: { type: String, required: true, unique: true },
+    _id: { type: String, required: true },
     user: {
         _id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
         name: String
