@@ -15,20 +15,22 @@ const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toStr
 
 var corsOptions = {
 	origin: function (origin, callback) {
-		let whitelist_array = String(process.env.WHITELIST).split(" ").join("").split(",");
-		if (whitelist_array.indexOf(origin) !== -1) {
-			callback(null, true)
+		// Build whitelist from environment variable
+		const whitelist = process.env.WHITELIST ? process.env.WHITELIST.split(",") : [];
+		if (!origin || whitelist.indexOf(origin) !== -1) {
+			callback(null, true);
 		} else {
-			callback(new Error('cors'))
+			callback(new Error('Not allowed by CORS'));
 		}
-	}
+	},
+	methods: "GET, POST, PUT",
+	credentials: true
 }
 
 // Middleware
 app.use(express.json());
 
-app.use(cors({ methods: "POST, GET, PUT" }));
-
+app.use(cors(corsOptions));
 
 // Initialize session middleware with MongoDB store
 app.use(
@@ -57,8 +59,8 @@ app.use(passport.session());
 connectDB();
 
 // Import Routes
-const userRoutes = require("./routes/user.routes", cors(corsOptions));
-const adminRoutes = require("./routes/admin.routes", cors(corsOptions));
+const userRoutes = require("./routes/user.routes");
+const adminRoutes = require("./routes/admin.routes");
 
 // Use Routes
 app.get('/', (req, res) => {
