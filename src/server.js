@@ -16,7 +16,7 @@ const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toStr
 var corsOptions = {
 	origin: function (origin, callback) {
 		// Build whitelist from environment variable
-		const whitelist = process.env.WHITELIST ? process.env.WHITELIST.split(",") : [];
+		const whitelist = ["http://localhost:5000", "https://owlmingo.space"];
 		if (!origin || whitelist.indexOf(origin) !== -1) {
 			callback(null, true);
 		} else {
