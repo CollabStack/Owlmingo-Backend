@@ -5,7 +5,6 @@ const { refreshToken } = require('../../../../utils/jwt.util');
 telegramOAuth = async (req, res) => {
     try {
         const { first_name, last_name, username, telegram_id } = req.body;
-        console.log(req.body);
         const { token, user } = await telegramAuthService.telegramOAuth(first_name, last_name, username, telegram_id);
         successResponse(res, { token, user }, 'User logged in successfully');
     } catch (error) {
