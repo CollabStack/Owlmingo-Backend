@@ -54,13 +54,60 @@ class SummaryController {
         }
     }
 
-    static async getSummaries(req, res) {
+    static async getSummariesTitle(req, res) {
+        try {
+            console.log('Getting summaries for user:', req.user._id);
+            const userId = req.user._id;
+            
+            if (!userId) {
+                console.error('User ID is missing');
+                return errorResponse(res, 'User ID is required', 400);
+            }
+
+            const summaries = await SummaryService.getSummaries(userId);
+            console.log('Retrieved summaries:', summaries ? summaries.length : 0);
+            
+            if (!summaries) {
+                return successResponse(res, [], 'No summaries available');
+            }
+
+            const summaryTitles = summaries.map(summary => ({
+                id: summary._id,
+                title: summary.title,
+                createdAt: summary.createdAt,
+                updatedAt: summary.updatedAt
+            }));
+
+            return successResponse(res, summaryTitles, 'Summary titles retrieved successfully');
+        } catch (error) {
+            console.error('Error in getSummariesTitle:', error);
+            return errorResponse(res, 'Failed to retrieve summary titles: ' + error.message);
+        }
+    }
+
+    static async getAllSummaries(req, res) {
         try {
             const userId = req.user._id;
             const summaries = await SummaryService.getSummaries(userId);
-            return successResponse(res, summaries, 'Summaries retrieved successfully');
+            
+            if (!summaries || summaries.length === 0) {
+                return successResponse(res, [], 'No summaries found');
+            }
+
+            const formattedSummaries = summaries.map(summary => ({
+                id: summary._id,
+                title: summary.title,
+                content: summary.content,
+                originalText: summary.original_text,
+                createdAt: summary.createdAt,
+                updatedAt: summary.updatedAt,
+                fileInfo: summary.fileInfo || null
+            }));
+
+            return successResponse(res, formattedSummaries, 'All summaries retrieved successfully');
         } catch (error) {
-            return errorResponse(res, error.message);
+            console.error('Error in getAllSummaries:', error);
+            return errorResponse(res, 'Failed to retrieve summaries');
         }
     }
 

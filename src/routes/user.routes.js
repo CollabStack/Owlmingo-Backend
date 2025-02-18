@@ -66,7 +66,7 @@ privateRouter.get('/quiz/:quizId/review', quizController.getQuizReview);
 // Summary Routes
 privateRouter.post('/summaries', SummaryController.createSummary);
 privateRouter.get('/summaries/:globalId', SummaryController.getSummary);
-privateRouter.get('/summaries', SummaryController.getSummaries); // Fixed position
+privateRouter.get('/summaries', SummaryController.getSummariesTitle); 
 privateRouter.put('/summaries/:globalId', SummaryController.updateSummary);
 privateRouter.delete('/summaries/:globalId', SummaryController.deleteSummary);
 

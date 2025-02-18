@@ -13,25 +13,29 @@ class SummaryService {
             }
 
             const requestData = {
-                prompt: `Generate a concise summary of the following text. The summary should:
-                1. Capture the main ideas and key points
-                2. Be well-structured and coherent
-                3. Be around 2-3 paragraphs
-                4. Maintain factual accuracy
-                5. Use clear, professional language
-
-                Text to summarize:
-                ${text}
-
-                Important: You must respond with valid JSON in exactly this format:
-                {
-                    "title": "Brief descriptive title",
-                    "content": "Generated summary text"
-                }`,
-                model: 'llama3.2:latest',  // Fixed model name
+                prompt: `Please generate a concise, objective summary of the text provided below. Follow these guidelines closely:
+              1. **Identify and capture the main ideas:** Extract key arguments, main points, and conclusions without adding personal opinions.
+              2. **Structure your summary:** Write a coherent summary in 2-3 paragraphs ensuring logical flow and clarity.
+              3. **Use professional language:** Ensure that the tone is clear, factual, and avoids unnecessary embellishments.
+              4. **Maintain factual accuracy:** Only include information that is explicitly present in the text.
+              5. **Be succinct but comprehensive:** Your summary should be detailed enough to cover the essence of the text without being verbose.
+              6. **Strictly adhere to the JSON format:** Return your response solely in valid JSON, using exactly these keys:
+                 - "title": A brief, descriptive title (preferably under 8 words).
+                 - "content": The generated summary text.
+              
+              Text to summarize:
+              ${text}
+              
+              Important: Your entire response must be valid JSON exactly in this format:
+              {
+                "title": "Brief descriptive title",
+                "content": "Generated summary text"
+              }`,
+                model: 'llama3.2:latest',
                 stream: false,
                 temperature: 0.7
-            };
+              };
+              
 
             const response = await axios.post(OLLAMA_API_URL, requestData, {
                 timeout: OLLAMA_TIMEOUT,
@@ -138,7 +142,134 @@ class SummaryService {
         }
     }
 
-    // ... other existing methods ...
+    static async getSummaries(userId) {
+        try {
+            if (!userId) {
+                throw new Error('User ID is required');
+            }
+
+            const summaries = await Summary.find({ user_id: userId })
+                .sort({ createdAt: -1 })
+                .lean();
+            
+            return summaries || [];
+        } catch (error) {
+            console.error('Error in SummaryService.getSummaries:', error);
+            throw error;
+        }
+    }
+
+    static async getSummaryById(userId, globalId) {
+        try {
+            if (!userId || !globalId) {
+                throw new Error('User ID and Summary ID are required');
+            }
+
+            const summary = await Summary.findOne({
+                _id: globalId,
+                user_id: userId
+            }).lean();
+
+            if (!summary) {
+                return null;
+            }
+
+            // If there's an associated file, get its info
+            if (summary.file_id) {
+                const file = await File.findOne({ _id: summary.file_id });
+                if (file) {
+                    summary.fileInfo = {
+                        fileName: file.metadata?.originalFileName,
+                        fileType: file.type,
+                        url: file.url
+                    };
+                }
+            }
+
+            return summary;
+        } catch (error) {
+            console.error('Error in SummaryService.getSummaryById:', error);
+            throw error;
+        }
+    }
+
+    static async updateSummary(userId, globalId, title, content) {
+        try {
+            if (!userId || !globalId) {
+                throw new Error('User ID and Summary ID are required');
+            }
+
+            if (!title || !content) {
+                throw new Error('Title and content are required');
+            }
+
+            const updatedSummary = await Summary.findOneAndUpdate(
+                {
+                    _id: globalId,
+                    user_id: userId
+                },
+                {
+                    $set: {
+                        title,
+                        content,
+                        updatedAt: new Date()
+                    }
+                },
+                {
+                    new: true,
+                    runValidators: true
+                }
+            ).lean();
+
+            if (!updatedSummary) {
+                return null;
+            }
+
+            // If there's an associated file, include its info
+            if (updatedSummary.file_id) {
+                const file = await File.findOne({ _id: updatedSummary.file_id });
+                if (file) {
+                    updatedSummary.fileInfo = {
+                        fileName: file.metadata?.originalFileName,
+                        fileType: file.type,
+                        url: file.url
+                    };
+                }
+            }
+
+            return updatedSummary;
+        } catch (error) {
+            console.error('Error in SummaryService.updateSummary:', error);
+            throw error;
+        }
+    }
+
+    static async deleteSummary(userId, globalId) {
+        try {
+            if (!userId || !globalId) {
+                throw new Error('User ID and Summary ID are required');
+            }
+
+            const summary = await Summary.findOneAndDelete({
+                _id: globalId,
+                user_id: userId
+            });
+
+            if (!summary) {
+                return null;
+            }
+
+            // If there was an associated file, you might want to delete it too
+            if (summary.file_id) {
+                await File.findOneAndDelete({ _id: summary.file_id });
+            }
+
+            return summary;
+        } catch (error) {
+            console.error('Error in SummaryService.deleteSummary:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = SummaryService;
