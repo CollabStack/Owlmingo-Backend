@@ -309,3 +309,230 @@ exports.submitAnswer = async (req, res) => {
     });
   }
 };
+
+// Function to get quiz answers
+exports.getQuizAnswers = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+    
+    // Find all answers for this quiz
+    const answers = await Answer.find({ 
+      quiz_id: quizId,
+      user_id: req.user._id 
+    }).sort({ question_index: 1 });
+
+    // Get the quiz for additional context
+    const quiz = await Quiz.findOne({ quiz_id: quizId });
+    if (!quiz) {
+      return res.status(404).send({ message: 'Quiz not found' });
+    }
+
+    // Format the response
+    const formattedAnswers = answers.map(answer => ({
+      questionIndex: answer.question_index,
+      question: quiz.questions[answer.question_index].question,
+      selectedOptions: answer.selected_options,
+      isCorrect: answer.is_correct,
+      submittedAt: answer.createdAt
+    }));
+
+    res.status(200).send({
+      quizId,
+      title: quiz.quiz_title,
+      totalQuestions: quiz.questions.length,
+      answeredQuestions: answers.length,
+      correctAnswers: answers.filter(a => a.is_correct).length,
+      answers: formattedAnswers
+    });
+
+  } catch (error) {
+    console.error('Get quiz answers error:', error);
+    res.status(500).send({ 
+      message: 'Error fetching quiz answers', 
+      error: error.message 
+    });
+  }
+};
+
+// Function to update a question
+
+exports.updateQuestion = async (req, res) => {
+  try {
+    const { quizId, questionIndex } = req.params;
+    const { question, options } = req.body;
+    
+    // Find the quiz
+    const quiz = await Quiz.findOne({ quiz_id: quizId });
+    if (!quiz) {
+      return res.status(404).send({ message: 'Quiz not found' });
+    }
+
+    // Check if user owns the quiz
+    if (quiz.created_by.toString() !== req.user._id.toString()) {
+      return res.status(403).send({ message: 'Unauthorized to edit this quiz' });
+    }
+
+    // Validate question index
+    if (questionIndex >= quiz.questions.length) {
+      return res.status(404).send({ message: 'Question not found' });
+    }
+
+    // Validate options format
+    if (!Array.isArray(options) || options.length !== 4) {
+      return res.status(400).send({ message: 'Must provide exactly 4 options' });
+    }
+
+    if (!options.some(opt => opt.isCorrect)) {
+      return res.status(400).send({ message: 'Must have exactly one correct option' });
+    }
+
+    // Update the question
+    quiz.questions[questionIndex] = {
+      question,
+      options: options.map(opt => ({
+        text: opt.text,
+        isCorrect: opt.isCorrect
+      }))
+    };
+
+    await quiz.save();
+
+    // Format response
+    const updatedQuestion = {
+      questionIndex: parseInt(questionIndex),
+      question: quiz.questions[questionIndex].question,
+      options: quiz.questions[questionIndex].options.map(opt => ({
+        id: opt._id,
+        text: opt.text,
+        ...(process.env.NODE_ENV === 'development' && { isCorrect: opt.isCorrect })
+      }))
+    };
+
+    res.status(200).send({
+      success: true,
+      question: updatedQuestion
+    });
+
+  } catch (error) {
+    console.error('Update question error:', error);
+    res.status(500).send({ 
+      message: 'Error updating question', 
+      error: error.message 
+    });
+  }
+};
+
+//Update quiz title
+exports.updateQuizTitle = async (req, res) => {
+  try {
+    // Get quizId from URL params and new title from request body
+    const { quizId } = req.params;
+    const { title } = req.body;
+
+    // Title validation
+    if (!title || title.trim().length === 0) {
+      return res.status(400).send({ 
+        message: 'Quiz title cannot be empty' 
+      });
+    }
+
+    // Find quiz by ID
+    const quiz = await Quiz.findOne({ quiz_id: quizId });
+    if (!quiz) {
+      return res.status(404).send({ message: 'Quiz not found' });
+    }
+
+    // Authorization check
+    if (quiz.created_by.toString() !== req.user._id.toString()) {
+      return res.status(403).send({ 
+        message: 'Unauthorized to edit this quiz' 
+      });
+    }
+
+    // Update title and save
+    quiz.quiz_title = title;
+    await quiz.save();
+
+    // Send success response
+    res.status(200).send({
+      success: true,
+      quiz: {
+        quizId: quiz.quiz_id,
+        title: quiz.quiz_title
+      }
+    });
+
+  } catch (error) {
+    // Error handling
+    console.error('Update quiz title error:', error);
+    res.status(500).send({ 
+      message: 'Error updating quiz title', 
+      error: error.message 
+    });
+  }
+};
+// Function to get quiz review
+exports.getQuizReview = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+    
+    // Get the quiz
+    const quiz = await Quiz.findOne({ quiz_id: quizId });
+    if (!quiz) {
+      return res.status(404).send({ message: 'Quiz not found' });
+    }
+
+    // Get user's answers for this quiz
+    const answers = await Answer.find({ 
+      quiz_id: quizId,
+      user_id: req.user._id 
+    }).sort({ question_index: 1 });
+
+    // Get quiz session for progress info
+    const quizSession = await QuizSession.findById(quizId);
+    if (!quizSession) {
+      return res.status(404).send({ message: 'Quiz session not found' });
+    }
+
+    // Map questions with user answers
+    const reviewData = quiz.questions.map((question, index) => {
+      const userAnswer = answers.find(a => a.question_index === index);
+      
+      return {
+        questionIndex: index,
+        question: question.question,
+        options: question.options.map(opt => ({
+          id: opt._id,
+          text: opt.text,
+          isCorrect: opt.isCorrect,
+          isSelected: userAnswer?.selected_options.includes(opt._id.toString())
+        })),
+        isAnswered: !!userAnswer,
+        isCorrect: userAnswer?.is_correct || false,
+        submittedAt: userAnswer?.createdAt
+      };
+    });
+
+    res.status(200).send({
+      quizId,
+      title: quiz.quiz_title,
+      progress: {
+        totalQuestions: quiz.questions.length,
+        answeredQuestions: quizSession.quiz.answeredCount,
+        correctAnswers: quizSession.quiz.correctCount,
+        score: quizSession.quiz.score,
+        status: quizSession.status,
+        startedAt: quizSession.startedAt,
+        completedAt: quizSession.completedAt
+      },
+      questions: reviewData
+    });
+
+  } catch (error) {
+    console.error('Get quiz review error:', error);
+    res.status(500).send({ 
+      message: 'Error fetching quiz review', 
+      error: error.message 
+    });
+  }
+};

@@ -57,7 +57,10 @@ privateRouter.get('/quiz/sessions', quizController.getUserQuizSessions);
 privateRouter.get('/quiz/:quizId/questions', quizController.getQuestionsByQuizId);
 privateRouter.post('/quiz/questions', quizController.createQuestion);
 privateRouter.post('/quiz/submit-answer', quizController.submitAnswer);
-
+privateRouter.get('/quiz/:quizId/answers', quizController.getQuizAnswers);
+privateRouter.put('/quiz/:quizId/questions/:questionIndex', quizController.updateQuestion);
+privateRouter.put('/quiz/:quizId/title', quizController.updateQuizTitle);
+privateRouter.get('/quiz/:quizId/review', quizController.getQuizReview);
 // Set prefix for private routes
 router.use('/auth', privateRouter);
 
