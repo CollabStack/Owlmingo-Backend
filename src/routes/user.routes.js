@@ -51,14 +51,12 @@ privateRouter.post('/process-file', uploadMiddleware, OcrController.processFile)
 privateRouter.post('/process-text', OcrController.processText);
 
 // Quiz Routes
+privateRouter.post('/quiz/generate', quizController.generateQuiz);
 privateRouter.get('/quiz/sessions/:sessionId', quizController.getQuizSession);
 privateRouter.get('/quiz/sessions', quizController.getUserQuizSessions);
-privateRouter.post('/quiz/generate', quizController.generateQuiz);
 privateRouter.get('/quiz/:quizId/questions', quizController.getQuestionsByQuizId);
 privateRouter.post('/quiz/questions', quizController.createQuestion);
-privateRouter.get('/quiz/questions', quizController.getQuestions);
-privateRouter.post('/quiz/answers', quizController.createAnswer);
-privateRouter.get('/quiz/answers', quizController.getAnswers);
+privateRouter.post('/quiz/submit-answer', quizController.submitAnswer);
 
 // Set prefix for private routes
 router.use('/auth', privateRouter);

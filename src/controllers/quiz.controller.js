@@ -9,23 +9,44 @@ const QuizSession = require('../models/quiz.session.model'); // Add this import
 // Function to create a new question
 exports.createQuestion = async (req, res) => {
   try {
-    const question = new Question(req.body);
-    await question.save();
-    res.status(201).send(question);
+    const { quiz_id, questions } = req.body;
+    
+    // Find the existing quiz
+    const quiz = await Quiz.findOne({ quiz_id });
+    
+    if (!quiz) {
+      return res.status(404).send({ message: 'Quiz not found' });
+    }
+
+    // Add new questions to the existing questions array
+    quiz.questions.push(...questions);
+    
+    // Save the updated quiz
+    await quiz.save();
+
+    // Format the response
+    const formattedQuestions = quiz.questions.map((q, index) => ({
+      questionIndex: index,
+      question: q.question,
+      options: q.options.map(opt => ({
+        id: opt._id,
+        text: opt.text,
+        isCorrect: opt.isCorrect
+      }))
+    }));
+
+    res.status(201).send({
+      quizId: quiz.quiz_id,
+      title: quiz.quiz_title,
+      totalQuestions: quiz.questions.length,
+      questions: formattedQuestions
+    });
   } catch (error) {
-    res.status(400).send(error);
+    res.status(400).send({ message: 'Error creating questions', error: error.message });
   }
 };
 
-// Function to get all questions
-exports.getQuestions = async (req, res) => {
-  try {
-    const questions = await Question.find();
-    res.status(200).send(questions);
-  } catch (error) {
-    res.status(500).send(error);
-  }
-};
+
 
 // Function to generate quiz questions from extracted text using Ollama
 exports.generateQuiz = async (req, res) => {
@@ -120,14 +141,14 @@ exports.generateQuiz = async (req, res) => {
 exports.getQuestionsByQuizId = async (req, res) => {
   try {
     const { quizId } = req.params;
-    const questions = await Question.find({ quiz_id: quizId });
+    const quiz = await Quiz.findOne({ quiz_id: quizId });
     
-    if (!questions || questions.length === 0) {
-      return res.status(404).send({ message: 'No questions found for this quiz' });
+    if (!quiz) {
+      return res.status(404).send({ message: 'Quiz not found' });
     }
 
-    const formattedQuestions = questions.map(q => ({
-      questionId: q._id,
+    const formattedQuestions = quiz.questions.map((q, index) => ({
+      questionIndex: index,
       question: q.question,
       options: q.options.map(opt => ({
         id: opt._id,
@@ -138,12 +159,13 @@ exports.getQuestionsByQuizId = async (req, res) => {
     }));
 
     res.status(200).send({
-      quizId,
-      title: questions[0]?.quiz_title || 'Generated Quiz',
-      totalQuestions: questions.length,
+      quizId: quiz.quiz_id,
+      title: quiz.quiz_title,
+      totalQuestions: quiz.questions.length,
       questions: formattedQuestions
     });
   } catch (error) {
+    console.error('Error:', error);
     res.status(500).send({ message: 'Error fetching questions', error: error.message });
   }
 };
@@ -199,23 +221,86 @@ exports.getQuizSession = async (req, res) => {
   }
 };
 
-// Function to create a new answer
-exports.createAnswer = async (req, res) => {
-  try {
-    const answer = new Answer(req.body);
-    await answer.save();
-    res.status(201).send(answer);
-  } catch (error) {
-    res.status(400).send(error);
-  }
-};
 
-// Function to get all answers
-exports.getAnswers = async (req, res) => {
+// Add this with other controller functions
+
+exports.submitAnswer = async (req, res) => {
   try {
-    const answers = await Answer.find();
-    res.status(200).send(answers);
+    const { quiz_id, question_index, selected_option } = req.body;
+    
+    // Find the quiz
+    const quiz = await Quiz.findOne({ quiz_id });
+    if (!quiz) {
+      return res.status(404).send({ message: 'Quiz not found' });
+    }
+
+    // Get the question
+    const question = quiz.questions[question_index];
+    if (!question) {
+      return res.status(404).send({ message: 'Question not found' });
+    }
+
+    // Check if the selected option is correct
+    const selectedOptionObj = question.options.find(opt => opt._id.toString() === selected_option);
+    if (!selectedOptionObj) {
+      return res.status(400).send({ message: 'Invalid option selected' });
+    }
+
+    // Find or create quiz session
+    let quizSession = await QuizSession.findById(quiz_id);
+    if (!quizSession) {
+      return res.status(404).send({ message: 'Quiz session not found' });
+    }
+
+    // Update quiz session progress
+    quizSession.updateProgress(
+      question_index, 
+      selected_option, 
+      selectedOptionObj.isCorrect
+    );
+
+    // Calculate new score
+    quizSession.quiz.score = (quizSession.quiz.correctCount / quizSession.quiz.totalQuestions) * 100;
+
+    // Update status if all questions are answered
+    if (quizSession.quiz.answeredCount === quizSession.quiz.totalQuestions) {
+      quizSession.status = 'completed';
+      quizSession.completedAt = new Date();
+    } else {
+      quizSession.status = 'in_progress';
+    }
+
+    await quizSession.save();
+
+    // Create answer record
+    const answer = new Answer({
+      user_id: req.user._id,
+      quiz_id: quiz_id,
+      question_index: question_index,
+      selected_options: [selected_option],
+      is_correct: selectedOptionObj.isCorrect
+    });
+
+    await answer.save();
+
+    res.status(200).send({
+      success: true,
+      isCorrect: selectedOptionObj.isCorrect,
+      correctOption: process.env.NODE_ENV === 'development' ? 
+        question.options.find(opt => opt.isCorrect)._id : undefined,
+      progress: {
+        answeredCount: quizSession.quiz.answeredCount,
+        correctCount: quizSession.quiz.correctCount,
+        score: quizSession.quiz.score,
+        status: quizSession.status
+      }
+    });
+
   } catch (error) {
-    res.status(500).send(error);
+    console.error('Submit answer error:', error);
+    res.status(500).send({ 
+      message: 'Error submitting answer', 
+      error: error.message 
+    });
   }
 };
