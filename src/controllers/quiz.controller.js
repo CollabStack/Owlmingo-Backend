@@ -67,12 +67,14 @@ exports.generateQuiz = async (req, res) => {
       return res.status(403).send({ message: 'Unauthorized access to this file' });
     }
 
+
     // Use the data field from the file document
     if (!fileOcr.data) {
       return res.status(400).send({ message: 'No text content found in file' });
     }
 
     const generatedQuiz = await ollamaService.generateQuiz(fileOcr.data);
+
     const quizId = uuidv4();
 
     // Create a single quiz document with all questions
@@ -81,7 +83,9 @@ exports.generateQuiz = async (req, res) => {
       quiz_title: generatedQuiz.title || 'Generated Quiz',
       source: {
         fileOcrId,
+
         extractedTextSegment: fileOcr.data // Use the data field here
+
       },
       questions: generatedQuiz.questions,
       created_by: req.user._id
@@ -99,7 +103,9 @@ exports.generateQuiz = async (req, res) => {
       source: {
         fileOcrId: fileOcr._id,
         fileName: fileOcr.metadata?.originalFileName,
+
         fileType: fileOcr.type
+
       },
       quiz: {
         totalQuestions: generatedQuiz.questions.length,
@@ -127,7 +133,9 @@ exports.generateQuiz = async (req, res) => {
       quizId,
       title: quiz.quiz_title,
       questionCount: quiz.questions.length,
+
       fileType: fileOcr.type,
+
       fileName: fileOcr.metadata?.originalFileName,
       questions: formattedQuestions,
       session: {

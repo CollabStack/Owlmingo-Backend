@@ -13,11 +13,25 @@ const app = express();
 // Session secret
 const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
 
-// Enable CORS
-app.use(cors());
+var corsOptions = {
+	origin: function (origin, callback) {
+		// Build whitelist from environment variable
+		// const whitelist = process.env.WHITELIST ? process.env.WHITELIST.split(",") : [];
+    const whitelist = ["http://localhost:5000", "https://owlmingo.space"];
+		if (!origin || whitelist.indexOf(origin) !== -1) {
+			callback(null, true);
+		} else {
+			callback(new Error('Not allowed by CORS'));
+		}
+	},
+	methods: "GET, POST, PUT",
+	credentials: true
+}
 
 // Middleware
 app.use(express.json());
+
+app.use(cors(corsOptions));
 
 // Initialize session middleware with MongoDB store
 app.use(

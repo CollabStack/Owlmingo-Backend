@@ -67,17 +67,18 @@ class OcrService {
 
     static async processText(text, userId, metadata) {
         try {
-            const ocrRecord = await FileOcr.create({
-                userId,
-                extractedText: text,
+            // Changed FileOcr to File and updated field names
+            const ocrRecord = await File.create({
+                user_id: userId,
+                data: text,
                 confidence: 100,
-                fileType: FileTypes.TEXT,
+                type: FileTypes.TEXT,
                 metadata
             });
 
             return {
                 id: ocrRecord._id,
-                text: ocrRecord.extractedText,
+                text: ocrRecord.data,
                 confidence: 100,
                 fileType: FileTypes.TEXT
             };

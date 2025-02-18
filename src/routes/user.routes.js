@@ -4,6 +4,7 @@ const router = express.Router();
 const authController = require('../controllers/Api/v1/user/auth.controller');
 const userController = require('../controllers/Api/v1/user/change_password.controller');
 const {userAuth} = require('../middlewares/auth.middleware');
+const { telegramOAuth } = require('../controllers/Api/v1/user/telegram.controller');
 const OcrController = require('../controllers/Api/v1/user/ocr.controller');
 const authService = require('../services/auth.service');
 const resetPasswordService = require('../services/user/opt_reset_pass.service');
@@ -16,6 +17,7 @@ const SummaryController = require('../controllers/Api/v1/user/summary.controller
 // Public Routes
 router.post('/register', authController.register);
 router.post('/login', authController.login);
+router.post('/telegram-oauth', telegramOAuth);
 router.post('/verify-otp', async (req, res) => {
     const { email, otp } = req.body;
     const result = await OtpService.verifyOtp(email, otp);
