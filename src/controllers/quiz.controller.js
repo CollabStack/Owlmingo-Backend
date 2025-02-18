@@ -56,18 +56,23 @@ exports.generateQuiz = async (req, res) => {
       return res.status(400).send({ message: 'FileOcrId is required' });
     }
 
-    // Fetch the File document (correct model import)
+    // Fetch the File document
     const fileOcr = await File.findById(fileOcrId);
     if (!fileOcr) {
       return res.status(404).send({ message: 'File not found' });
     }
 
-    // Check if the file belongs to the requesting user using correct field name
+    // Check if the file belongs to the requesting user
     if (fileOcr.user_id.toString() !== req.user._id.toString()) {
       return res.status(403).send({ message: 'Unauthorized access to this file' });
     }
 
-    const generatedQuiz = await ollamaService.generateQuiz(fileOcr.extractedText);
+    // Use the data field from the file document
+    if (!fileOcr.data) {
+      return res.status(400).send({ message: 'No text content found in file' });
+    }
+
+    const generatedQuiz = await ollamaService.generateQuiz(fileOcr.data);
     const quizId = uuidv4();
 
     // Create a single quiz document with all questions
@@ -76,7 +81,7 @@ exports.generateQuiz = async (req, res) => {
       quiz_title: generatedQuiz.title || 'Generated Quiz',
       source: {
         fileOcrId,
-        extractedTextSegment: fileOcr.extractedText
+        extractedTextSegment: fileOcr.data // Use the data field here
       },
       questions: generatedQuiz.questions,
       created_by: req.user._id
@@ -86,7 +91,7 @@ exports.generateQuiz = async (req, res) => {
 
     // Create a new quiz session
     const quizSession = new QuizSession({
-      _id: quizId, // Use the same UUID as the quiz
+      _id: quizId,
       user: {
         _id: req.user._id,
         name: req.user.username
@@ -94,7 +99,7 @@ exports.generateQuiz = async (req, res) => {
       source: {
         fileOcrId: fileOcr._id,
         fileName: fileOcr.metadata?.originalFileName,
-        fileType: fileOcr.fileType
+        fileType: fileOcr.type
       },
       quiz: {
         totalQuestions: generatedQuiz.questions.length,
@@ -122,7 +127,7 @@ exports.generateQuiz = async (req, res) => {
       quizId,
       title: quiz.quiz_title,
       questionCount: quiz.questions.length,
-      fileType: fileOcr.fileType,
+      fileType: fileOcr.type,
       fileName: fileOcr.metadata?.originalFileName,
       questions: formattedQuestions,
       session: {
