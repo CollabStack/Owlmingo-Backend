@@ -11,6 +11,7 @@ const OtpService = require('../services/user/otp.service');
 const quizController = require('../controllers/quiz.controller');
 const { uploadMiddleware } = require('../middlewares/file_upload.middleware');
 const { getPlans, getPlan } = require('../controllers/Api/v1/user/plan.controller');
+const SummaryController = require('../controllers/Api/v1/user/summary.controller');
 
 // Public Routes
 router.post('/register', authController.register);
@@ -61,6 +62,14 @@ privateRouter.get('/quiz/:quizId/answers', quizController.getQuizAnswers);
 privateRouter.put('/quiz/:quizId/questions/:questionIndex', quizController.updateQuestion);
 privateRouter.put('/quiz/:quizId/title', quizController.updateQuizTitle);
 privateRouter.get('/quiz/:quizId/review', quizController.getQuizReview);
+
+// Summary Routes
+privateRouter.post('/summaries', SummaryController.createSummary);
+privateRouter.get('/summaries/:globalId', SummaryController.getSummary);
+privateRouter.get('/summaries', SummaryController.getSummaries); // Fixed position
+privateRouter.put('/summaries/:globalId', SummaryController.updateSummary);
+privateRouter.delete('/summaries/:globalId', SummaryController.deleteSummary);
+
 // Set prefix for private routes
 router.use('/auth', privateRouter);
 
