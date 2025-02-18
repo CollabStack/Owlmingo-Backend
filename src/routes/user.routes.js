@@ -68,7 +68,8 @@ privateRouter.get('/quiz/:quizId/review', quizController.getQuizReview);
 // Summary Routes
 privateRouter.post('/summaries', SummaryController.createSummary);
 privateRouter.get('/summaries/:globalId', SummaryController.getSummary);
-privateRouter.get('/summaries', SummaryController.getSummariesTitle); 
+privateRouter.get('/summaries', SummaryController.getAllSummaries);
+privateRouter.get('/summariesTitle', SummaryController.getSummariesTitle); 
 privateRouter.put('/summaries/:globalId', SummaryController.updateSummary);
 privateRouter.delete('/summaries/:globalId', SummaryController.deleteSummary);
 

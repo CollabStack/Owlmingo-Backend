@@ -3,7 +3,7 @@ const Summary = require('../models/summary.model');
 const { File } = require('../models/file.model');
 
 const OLLAMA_API_URL = 'https://llm-system-product-name.tail973907.ts.net/api/generate';
-const OLLAMA_TIMEOUT = 30000; // 30 seconds timeout
+const OLLAMA_TIMEOUT = 100000;
 
 class SummaryService {
     static async generateSummaryFromText(text) {
