@@ -9,23 +9,44 @@ const QuizSession = require('../models/quiz.session.model'); // Add this import
 // Function to create a new question
 exports.createQuestion = async (req, res) => {
   try {
-    const question = new Question(req.body);
-    await question.save();
-    res.status(201).send(question);
+    const { quiz_id, questions } = req.body;
+    
+    // Find the existing quiz
+    const quiz = await Quiz.findOne({ quiz_id });
+    
+    if (!quiz) {
+      return res.status(404).send({ message: 'Quiz not found' });
+    }
+
+    // Add new questions to the existing questions array
+    quiz.questions.push(...questions);
+    
+    // Save the updated quiz
+    await quiz.save();
+
+    // Format the response
+    const formattedQuestions = quiz.questions.map((q, index) => ({
+      questionIndex: index,
+      question: q.question,
+      options: q.options.map(opt => ({
+        id: opt._id,
+        text: opt.text,
+        isCorrect: opt.isCorrect
+      }))
+    }));
+
+    res.status(201).send({
+      quizId: quiz.quiz_id,
+      title: quiz.quiz_title,
+      totalQuestions: quiz.questions.length,
+      questions: formattedQuestions
+    });
   } catch (error) {
-    res.status(400).send(error);
+    res.status(400).send({ message: 'Error creating questions', error: error.message });
   }
 };
 
-// Function to get all questions
-exports.getQuestions = async (req, res) => {
-  try {
-    const questions = await Question.find();
-    res.status(200).send(questions);
-  } catch (error) {
-    res.status(500).send(error);
-  }
-};
+
 
 // Function to generate quiz questions from extracted text using Ollama
 exports.generateQuiz = async (req, res) => {
@@ -35,18 +56,25 @@ exports.generateQuiz = async (req, res) => {
       return res.status(400).send({ message: 'FileOcrId is required' });
     }
 
-    // Fetch the File document (correct model import)
+    // Fetch the File document
     const fileOcr = await File.findById(fileOcrId);
     if (!fileOcr) {
       return res.status(404).send({ message: 'File not found' });
     }
 
-    // Check if the file belongs to the requesting user using correct field name
+    // Check if the file belongs to the requesting user
     if (fileOcr.user_id.toString() !== req.user._id.toString()) {
       return res.status(403).send({ message: 'Unauthorized access to this file' });
     }
 
-    const generatedQuiz = await ollamaService.generateQuiz(fileOcr.data); // Changed from fileOcr.extractedText to fileOcr.data
+
+    // Use the data field from the file document
+    if (!fileOcr.data) {
+      return res.status(400).send({ message: 'No text content found in file' });
+    }
+
+    const generatedQuiz = await ollamaService.generateQuiz(fileOcr.data);
+
     const quizId = uuidv4();
 
     // Create a single quiz document with all questions
@@ -55,7 +83,9 @@ exports.generateQuiz = async (req, res) => {
       quiz_title: generatedQuiz.title || 'Generated Quiz',
       source: {
         fileOcrId,
-        extractedTextSegment: fileOcr.data // Changed from fileOcr.extractedText to fileOcr.data
+
+        extractedTextSegment: fileOcr.data // Use the data field here
+
       },
       questions: generatedQuiz.questions,
       created_by: req.user._id
@@ -65,7 +95,7 @@ exports.generateQuiz = async (req, res) => {
 
     // Create a new quiz session
     const quizSession = new QuizSession({
-      _id: quizId, // Use the same UUID as the quiz
+      _id: quizId,
       user: {
         _id: req.user._id,
         name: req.user.username
@@ -73,7 +103,9 @@ exports.generateQuiz = async (req, res) => {
       source: {
         fileOcrId: fileOcr._id,
         fileName: fileOcr.metadata?.originalFileName,
-        fileType: fileOcr.type // Changed from fileOcr.fileType to fileOcr.type
+
+        fileType: fileOcr.type
+
       },
       quiz: {
         totalQuestions: generatedQuiz.questions.length,
@@ -101,7 +133,9 @@ exports.generateQuiz = async (req, res) => {
       quizId,
       title: quiz.quiz_title,
       questionCount: quiz.questions.length,
-      fileType: fileOcr.type, // Changed from fileOcr.fileType to fileOcr.type
+
+      fileType: fileOcr.type,
+
       fileName: fileOcr.metadata?.originalFileName,
       questions: formattedQuestions,
       session: {
@@ -120,14 +154,14 @@ exports.generateQuiz = async (req, res) => {
 exports.getQuestionsByQuizId = async (req, res) => {
   try {
     const { quizId } = req.params;
-    const questions = await Question.find({ quiz_id: quizId });
+    const quiz = await Quiz.findOne({ quiz_id: quizId });
     
-    if (!questions || questions.length === 0) {
-      return res.status(404).send({ message: 'No questions found for this quiz' });
+    if (!quiz) {
+      return res.status(404).send({ message: 'Quiz not found' });
     }
 
-    const formattedQuestions = questions.map(q => ({
-      questionId: q._id,
+    const formattedQuestions = quiz.questions.map((q, index) => ({
+      questionIndex: index,
       question: q.question,
       options: q.options.map(opt => ({
         id: opt._id,
@@ -138,12 +172,13 @@ exports.getQuestionsByQuizId = async (req, res) => {
     }));
 
     res.status(200).send({
-      quizId,
-      title: questions[0]?.quiz_title || 'Generated Quiz',
-      totalQuestions: questions.length,
+      quizId: quiz.quiz_id,
+      title: quiz.quiz_title,
+      totalQuestions: quiz.questions.length,
       questions: formattedQuestions
     });
   } catch (error) {
+    console.error('Error:', error);
     res.status(500).send({ message: 'Error fetching questions', error: error.message });
   }
 };
@@ -199,23 +234,313 @@ exports.getQuizSession = async (req, res) => {
   }
 };
 
-// Function to create a new answer
-exports.createAnswer = async (req, res) => {
+
+// Add this with other controller functions
+
+exports.submitAnswer = async (req, res) => {
   try {
-    const answer = new Answer(req.body);
+    const { quiz_id, question_index, selected_option } = req.body;
+    
+    // Find the quiz
+    const quiz = await Quiz.findOne({ quiz_id });
+    if (!quiz) {
+      return res.status(404).send({ message: 'Quiz not found' });
+    }
+
+    // Get the question
+    const question = quiz.questions[question_index];
+    if (!question) {
+      return res.status(404).send({ message: 'Question not found' });
+    }
+
+    // Check if the selected option is correct
+    const selectedOptionObj = question.options.find(opt => opt._id.toString() === selected_option);
+    if (!selectedOptionObj) {
+      return res.status(400).send({ message: 'Invalid option selected' });
+    }
+
+    // Find or create quiz session
+    let quizSession = await QuizSession.findById(quiz_id);
+    if (!quizSession) {
+      return res.status(404).send({ message: 'Quiz session not found' });
+    }
+
+    // Update quiz session progress
+    quizSession.updateProgress(
+      question_index, 
+      selected_option, 
+      selectedOptionObj.isCorrect
+    );
+
+    // Calculate new score
+    quizSession.quiz.score = (quizSession.quiz.correctCount / quizSession.quiz.totalQuestions) * 100;
+
+    // Update status if all questions are answered
+    if (quizSession.quiz.answeredCount === quizSession.quiz.totalQuestions) {
+      quizSession.status = 'completed';
+      quizSession.completedAt = new Date();
+    } else {
+      quizSession.status = 'in_progress';
+    }
+
+    await quizSession.save();
+
+    // Create answer record
+    const answer = new Answer({
+      user_id: req.user._id,
+      quiz_id: quiz_id,
+      question_index: question_index,
+      selected_options: [selected_option],
+      is_correct: selectedOptionObj.isCorrect
+    });
+
     await answer.save();
-    res.status(201).send(answer);
+
+    res.status(200).send({
+      success: true,
+      isCorrect: selectedOptionObj.isCorrect,
+      correctOption: process.env.NODE_ENV === 'development' ? 
+        question.options.find(opt => opt.isCorrect)._id : undefined,
+      progress: {
+        answeredCount: quizSession.quiz.answeredCount,
+        correctCount: quizSession.quiz.correctCount,
+        score: quizSession.quiz.score,
+        status: quizSession.status
+      }
+    });
+
   } catch (error) {
-    res.status(400).send(error);
+    console.error('Submit answer error:', error);
+    res.status(500).send({ 
+      message: 'Error submitting answer', 
+      error: error.message 
+    });
   }
 };
 
-// Function to get all answers
-exports.getAnswers = async (req, res) => {
+// Function to get quiz answers
+exports.getQuizAnswers = async (req, res) => {
   try {
-    const answers = await Answer.find();
-    res.status(200).send(answers);
+    const { quizId } = req.params;
+    
+    // Find all answers for this quiz
+    const answers = await Answer.find({ 
+      quiz_id: quizId,
+      user_id: req.user._id 
+    }).sort({ question_index: 1 });
+
+    // Get the quiz for additional context
+    const quiz = await Quiz.findOne({ quiz_id: quizId });
+    if (!quiz) {
+      return res.status(404).send({ message: 'Quiz not found' });
+    }
+
+    // Format the response
+    const formattedAnswers = answers.map(answer => ({
+      questionIndex: answer.question_index,
+      question: quiz.questions[answer.question_index].question,
+      selectedOptions: answer.selected_options,
+      isCorrect: answer.is_correct,
+      submittedAt: answer.createdAt
+    }));
+
+    res.status(200).send({
+      quizId,
+      title: quiz.quiz_title,
+      totalQuestions: quiz.questions.length,
+      answeredQuestions: answers.length,
+      correctAnswers: answers.filter(a => a.is_correct).length,
+      answers: formattedAnswers
+    });
+
   } catch (error) {
-    res.status(500).send(error);
+    console.error('Get quiz answers error:', error);
+    res.status(500).send({ 
+      message: 'Error fetching quiz answers', 
+      error: error.message 
+    });
+  }
+};
+
+// Function to update a question
+
+exports.updateQuestion = async (req, res) => {
+  try {
+    const { quizId, questionIndex } = req.params;
+    const { question, options } = req.body;
+    
+    // Find the quiz
+    const quiz = await Quiz.findOne({ quiz_id: quizId });
+    if (!quiz) {
+      return res.status(404).send({ message: 'Quiz not found' });
+    }
+
+    // Check if user owns the quiz
+    if (quiz.created_by.toString() !== req.user._id.toString()) {
+      return res.status(403).send({ message: 'Unauthorized to edit this quiz' });
+    }
+
+    // Validate question index
+    if (questionIndex >= quiz.questions.length) {
+      return res.status(404).send({ message: 'Question not found' });
+    }
+
+    // Validate options format
+    if (!Array.isArray(options) || options.length !== 4) {
+      return res.status(400).send({ message: 'Must provide exactly 4 options' });
+    }
+
+    if (!options.some(opt => opt.isCorrect)) {
+      return res.status(400).send({ message: 'Must have exactly one correct option' });
+    }
+
+    // Update the question
+    quiz.questions[questionIndex] = {
+      question,
+      options: options.map(opt => ({
+        text: opt.text,
+        isCorrect: opt.isCorrect
+      }))
+    };
+
+    await quiz.save();
+
+    // Format response
+    const updatedQuestion = {
+      questionIndex: parseInt(questionIndex),
+      question: quiz.questions[questionIndex].question,
+      options: quiz.questions[questionIndex].options.map(opt => ({
+        id: opt._id,
+        text: opt.text,
+        ...(process.env.NODE_ENV === 'development' && { isCorrect: opt.isCorrect })
+      }))
+    };
+
+    res.status(200).send({
+      success: true,
+      question: updatedQuestion
+    });
+
+  } catch (error) {
+    console.error('Update question error:', error);
+    res.status(500).send({ 
+      message: 'Error updating question', 
+      error: error.message 
+    });
+  }
+};
+
+//Update quiz title
+exports.updateQuizTitle = async (req, res) => {
+  try {
+    // Get quizId from URL params and new title from request body
+    const { quizId } = req.params;
+    const { title } = req.body;
+
+    // Title validation
+    if (!title || title.trim().length === 0) {
+      return res.status(400).send({ 
+        message: 'Quiz title cannot be empty' 
+      });
+    }
+
+    // Find quiz by ID
+    const quiz = await Quiz.findOne({ quiz_id: quizId });
+    if (!quiz) {
+      return res.status(404).send({ message: 'Quiz not found' });
+    }
+
+    // Authorization check
+    if (quiz.created_by.toString() !== req.user._id.toString()) {
+      return res.status(403).send({ 
+        message: 'Unauthorized to edit this quiz' 
+      });
+    }
+
+    // Update title and save
+    quiz.quiz_title = title;
+    await quiz.save();
+
+    // Send success response
+    res.status(200).send({
+      success: true,
+      quiz: {
+        quizId: quiz.quiz_id,
+        title: quiz.quiz_title
+      }
+    });
+
+  } catch (error) {
+    // Error handling
+    console.error('Update quiz title error:', error);
+    res.status(500).send({ 
+      message: 'Error updating quiz title', 
+      error: error.message 
+    });
+  }
+};
+// Function to get quiz review
+exports.getQuizReview = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+    
+    // Get the quiz
+    const quiz = await Quiz.findOne({ quiz_id: quizId });
+    if (!quiz) {
+      return res.status(404).send({ message: 'Quiz not found' });
+    }
+
+    // Get user's answers for this quiz
+    const answers = await Answer.find({ 
+      quiz_id: quizId,
+      user_id: req.user._id 
+    }).sort({ question_index: 1 });
+
+    // Get quiz session for progress info
+    const quizSession = await QuizSession.findById(quizId);
+    if (!quizSession) {
+      return res.status(404).send({ message: 'Quiz session not found' });
+    }
+
+    // Map questions with user answers
+    const reviewData = quiz.questions.map((question, index) => {
+      const userAnswer = answers.find(a => a.question_index === index);
+      
+      return {
+        questionIndex: index,
+        question: question.question,
+        options: question.options.map(opt => ({
+          id: opt._id,
+          text: opt.text,
+          isCorrect: opt.isCorrect,
+          isSelected: userAnswer?.selected_options.includes(opt._id.toString())
+        })),
+        isAnswered: !!userAnswer,
+        isCorrect: userAnswer?.is_correct || false,
+        submittedAt: userAnswer?.createdAt
+      };
+    });
+
+    res.status(200).send({
+      quizId,
+      title: quiz.quiz_title,
+      progress: {
+        totalQuestions: quiz.questions.length,
+        answeredQuestions: quizSession.quiz.answeredCount,
+        correctAnswers: quizSession.quiz.correctCount,
+        score: quizSession.quiz.score,
+        status: quizSession.status,
+        startedAt: quizSession.startedAt,
+        completedAt: quizSession.completedAt
+      },
+      questions: reviewData
+    });
+
+  } catch (error) {
+    console.error('Get quiz review error:', error);
+    res.status(500).send({ 
+      message: 'Error fetching quiz review', 
+      error: error.message 
+    });
   }
 };

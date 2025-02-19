@@ -12,6 +12,7 @@ const OtpService = require('../services/user/otp.service');
 const quizController = require('../controllers/quiz.controller');
 const { uploadMiddleware } = require('../middlewares/file_upload.middleware');
 const { getPlans, getPlan } = require('../controllers/Api/v1/user/plan.controller');
+const SummaryController = require('../controllers/Api/v1/user/summary.controller');
 
 // Public Routes
 router.post('/register', authController.register);
@@ -53,14 +54,24 @@ privateRouter.post('/process-file', uploadMiddleware, OcrController.processFile)
 privateRouter.post('/process-text', OcrController.processText);
 
 // Quiz Routes
+privateRouter.post('/quiz/generate', quizController.generateQuiz);
 privateRouter.get('/quiz/sessions/:sessionId', quizController.getQuizSession);
 privateRouter.get('/quiz/sessions', quizController.getUserQuizSessions);
-privateRouter.post('/quiz/generate', quizController.generateQuiz);
 privateRouter.get('/quiz/:quizId/questions', quizController.getQuestionsByQuizId);
 privateRouter.post('/quiz/questions', quizController.createQuestion);
-privateRouter.get('/quiz/questions', quizController.getQuestions);
-privateRouter.post('/quiz/answers', quizController.createAnswer);
-privateRouter.get('/quiz/answers', quizController.getAnswers);
+privateRouter.post('/quiz/submit-answer', quizController.submitAnswer);
+privateRouter.get('/quiz/:quizId/answers', quizController.getQuizAnswers);
+privateRouter.put('/quiz/:quizId/questions/:questionIndex', quizController.updateQuestion);
+privateRouter.put('/quiz/:quizId/title', quizController.updateQuizTitle);
+privateRouter.get('/quiz/:quizId/review', quizController.getQuizReview);
+
+// Summary Routes
+privateRouter.post('/summaries', SummaryController.createSummary);
+privateRouter.get('/summaries/:globalId', SummaryController.getSummary);
+privateRouter.get('/summaries', SummaryController.getAllSummaries);
+privateRouter.get('/summariesTitle', SummaryController.getSummariesTitle); 
+privateRouter.put('/summaries/:globalId', SummaryController.updateSummary);
+privateRouter.delete('/summaries/:globalId', SummaryController.deleteSummary);
 
 // Set prefix for private routes
 router.use('/auth', privateRouter);
