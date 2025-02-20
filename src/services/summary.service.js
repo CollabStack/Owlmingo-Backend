@@ -15,7 +15,7 @@ class SummaryService {
             const requestData = {
                 prompt: `Please generate a concise, objective summary of the text provided below. Follow these guidelines closely:
               1. **Identify and capture the main ideas:** Extract key arguments, main points, and conclusions without adding personal opinions.
-              2. **Structure your summary:** Write a coherent summary in 2-3 paragraphs ensuring logical flow and clarity.
+              2. **Structure your summary:** Write a coherent summary in 4-5  paragraphs ensuring logical flow and clarity.
               3. **Use professional language:** Ensure that the tone is clear, factual, and avoids unnecessary embellishments.
               4. **Maintain factual accuracy:** Only include information that is explicitly present in the text.
               5. **Be succinct but comprehensive:** Your summary should be detailed enough to cover the essence of the text without being verbose.
