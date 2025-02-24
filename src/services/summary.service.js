@@ -22,6 +22,7 @@ class SummaryService {
               6. **Strictly adhere to the JSON format:** Return your response solely in valid JSON, using exactly these keys:
                  - "title": A brief, descriptive title (preferably under 8 words).
                  - "content": The generated summary text.
+                 
               
               Text to summarize:
               ${text}
@@ -41,6 +42,7 @@ class SummaryService {
                 timeout: OLLAMA_TIMEOUT,
                 headers: {
                     'Content-Type': 'application/json'
+                    
                 }
             });
 
