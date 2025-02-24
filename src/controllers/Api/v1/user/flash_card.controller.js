@@ -1,0 +1,159 @@
+const { successResponse, errorResponse } = require('../../baseAPI.controller');
+const FlashCardService = require('../../../../services/user/flash_card.service');
+
+class FlashCardController {
+    static async createFlashCard(req, res) {
+        try {
+            const userId = req.user._id;
+            const { title, front, back, category, difficulty } = req.body;
+
+            if (!title || !front || !back) {
+                return errorResponse(res, 'Title, front, and back content are required', 400);
+            }
+
+            const flashCard = await FlashCardService.createFlashCard(userId, {
+                title, front, back, category, difficulty
+            });
+
+            return successResponse(res, flashCard, 'Flash card created successfully');
+        } catch (error) {
+            console.error('Create flash card error:', error);
+            return errorResponse(res, error.message);
+        }
+    }
+
+    static async getAllFlashCards(req, res) {
+        try {
+            const userId = req.user._id;
+            const { category, difficulty, search, sortBy, sortOrder } = req.query;
+
+            const flashCards = await FlashCardService.getAllFlashCards(userId, {
+                category, difficulty, search, sortBy, sortOrder
+            });
+
+            return successResponse(res, {
+                count: flashCards.length,
+                flashCards
+            }, 'Flash cards retrieved successfully');
+        } catch (error) {
+            console.error('Get flash cards error:', error);
+            return errorResponse(res, error.message);
+        }
+    }
+
+    static async getFlashCard(req, res) {
+        try {
+            const userId = req.user._id;
+            const { globalId } = req.params;
+
+            const flashCard = await FlashCardService.getFlashCardById(userId, globalId);
+            if (!flashCard) {
+                return errorResponse(res, 'Flash card not found', 404);
+            }
+
+            return successResponse(res, flashCard, 'Flash card retrieved successfully');
+        } catch (error) {
+            console.error('Get flash card error:', error);
+            return errorResponse(res, error.message);
+        }
+    }
+
+    static async updateFlashCard(req, res) {
+        try {
+            const userId = req.user._id;
+            const { globalId } = req.params;
+            const updateData = {
+                cardId: req.body._id,
+                front: req.body.front,
+                back: req.body.back,
+                category: req.body.category,
+                difficulty: req.body.difficulty,
+                status: req.body.status,
+                nextReviewDate: req.body.nextReviewDate
+            };
+            
+            const flashCard = await FlashCardService.updateFlashCard(userId, globalId, updateData);
+            if (!flashCard) {
+                return errorResponse(res, 'Flash card not found', 404);
+            }
+
+            return successResponse(res, flashCard, 'Flash card updated successfully');
+        } catch (error) {
+            console.error('Update flash card error:', error);
+            return errorResponse(res, error.message);
+        }
+    }
+
+    static async deleteFlashCard(req, res) {
+        try {
+            const userId = req.user._id;
+            const { globalId } = req.params;
+
+            const flashCard = await FlashCardService.deleteFlashCard(userId, globalId);
+            if (!flashCard) {
+                return errorResponse(res, 'Flash card not found', 404);
+            }
+
+            return successResponse(res, null, 'Flash card deleted successfully');
+        } catch (error) {
+            console.error('Delete flash card error:', error);
+            return errorResponse(res, error.message);
+        }
+    }
+
+    static async generateFromText(req, res) {
+        try {
+            const userId = req.user._id;
+            const { text, fileOcrId } = req.body;
+
+            let flashCards;
+
+            if (fileOcrId) {
+                // If fileOcrId is provided, generate from FileOcr
+                flashCards = await FlashCardService.createFlashCardsFromFileOcr(userId, fileOcrId);
+            } else if (text) {
+                // If text is provided directly, use that
+                if (text.length < 10) {
+                    return errorResponse(res, 'Text content is too short', 400);
+                }
+                if (text.length > 10000) {
+                    return errorResponse(res, 'Text content is too long (max 10000 characters)', 400);
+                }
+                flashCards = await FlashCardService.createFlashCardsFromText(userId, text);
+            } else {
+                return errorResponse(res, 'Either text or fileOcrId is required', 400);
+            }
+            
+            if (!flashCards || !flashCards.cards || flashCards.cards.length === 0) {
+                return errorResponse(res, 'Failed to generate flash cards', 400);
+            }
+
+            return successResponse(res, flashCards, 'Flash cards generated successfully');
+        } catch (error) {
+            console.error('Generate flash cards error:', error);
+            return errorResponse(res, `Failed to generate flash cards: ${error.message}`, 500);
+        }
+    }
+
+    static async updateCardStatus(req, res) {
+        try {
+            const userId = req.user._id;
+            const { flashCardId, cardIndex } = req.params;
+            const { status, nextReviewDate } = req.body;
+
+            const flashCard = await FlashCardService.updateCardStatus(
+                userId, 
+                flashCardId, 
+                cardIndex, 
+                status, 
+                nextReviewDate
+            );
+
+            return successResponse(res, flashCard, 'Card status updated successfully');
+        } catch (error) {
+            return errorResponse(res, error.message);
+        }
+    }
+}
+
+module.exports = FlashCardController;

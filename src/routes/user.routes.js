@@ -13,6 +13,9 @@ const quizController = require('../controllers/quiz.controller');
 const { uploadMiddleware } = require('../middlewares/file_upload.middleware');
 const { getPlans, getPlan } = require('../controllers/Api/v1/user/plan.controller');
 const SummaryController = require('../controllers/Api/v1/user/summary.controller');
+const FlashCardController = require('../controllers/Api/v1/user/flash_card.controller');
+const FlashCardSessionController = require('../controllers/Api/v1/user/flash_card_session.controller');
+
 
 // Public Routes
 router.post('/register', authController.register);
@@ -72,6 +75,20 @@ privateRouter.get('/summaries', SummaryController.getAllSummaries);
 privateRouter.get('/summariesTitle', SummaryController.getSummariesTitle); 
 privateRouter.put('/summaries/:globalId', SummaryController.updateSummary);
 privateRouter.delete('/summaries/:globalId', SummaryController.deleteSummary);
+
+// Flash Card Routes
+privateRouter.post('/flashcards/generate', FlashCardController.generateFromText);
+privateRouter.post('/flashcards', FlashCardController.createFlashCard);
+privateRouter.get('/flashcards', FlashCardController.getAllFlashCards);
+privateRouter.get('/flashcards/:globalId', FlashCardController.getFlashCard);
+privateRouter.put('/flashcards/:globalId', FlashCardController.updateFlashCard);
+privateRouter.delete('/flashcards/:globalId', FlashCardController.deleteFlashCard);
+
+// Flash Card Session Routes
+privateRouter.post('/flashcards/sessions', FlashCardSessionController.createSession);
+privateRouter.get('/flashcards/sessions', FlashCardSessionController.getSessions);
+privateRouter.get('/flashcards/sessions/:globalId', FlashCardSessionController.getSession);
+privateRouter.post('/flashcards/sessions/:sessionId/cards/:cardId/review', FlashCardSessionController.updateCardReview);
 
 // Set prefix for private routes
 router.use('/auth', privateRouter);
