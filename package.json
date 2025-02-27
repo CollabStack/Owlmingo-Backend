@@ -13,7 +13,7 @@
     "heroku-postbuild": "npm install --production=false"
   },
   "keywords": [],
-  "author": "",
+  "author": "CollabStack",
   "license": "ISC",
   "description": "",
   "dependencies": {

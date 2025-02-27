@@ -6,12 +6,12 @@ const userController = require('../controllers/Api/v1/user/change_password.contr
 const {userAuth} = require('../middlewares/auth.middleware');
 const { telegramOAuth } = require('../controllers/Api/v1/user/telegram.controller');
 const OcrController = require('../controllers/Api/v1/user/ocr.controller');
-const authService = require('../services/auth.service');
 const resetPasswordService = require('../services/user/opt_reset_pass.service');
 const OtpService = require('../services/user/otp.service');
 const quizController = require('../controllers/quiz.controller');
 const { uploadMiddleware } = require('../middlewares/file_upload.middleware');
 const { getPlans, getPlan } = require('../controllers/Api/v1/user/plan.controller');
+const { googleLogin, googleCallback, googleSuccess } = require('../controllers/Api/v1/user/google.controller');
 
 // Public Routes
 router.post('/register', authController.register);
@@ -38,6 +38,15 @@ router.post('/reset-password', async (req, res) => {
     const result = await resetPasswordService.verifyAndResetPassword(email, otp, newPassword);
     res.status(result.statusCode).json(result);
 });
+
+// Google OAuth
+router.get('/google', googleLogin);
+router.get('/google/callback', googleCallback, googleSuccess);
+
+// Github OAuth
+router.get('/github', authController.githubLogin);
+router.get('/github/callback', authController.githubCallback, authController.githubSuccess);
+
 
 router.get('/plans', getPlans);
 router.get('/plans/:id', getPlan);
