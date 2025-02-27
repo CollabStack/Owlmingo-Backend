@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const OLLAMA_API_URL = 'https://llm-system-product-name.tail973907.ts.net/api/generate';
+const OLLAMA_API_URL = 'https://llm-system.tail973907.ts.net/api/generate';
 
 exports.generateQuiz = async (extractedText) => {
   try {

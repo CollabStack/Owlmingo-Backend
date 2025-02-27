@@ -3,7 +3,7 @@ const FlashCard = require('../../models/flash_card.model');
 const { File } = require('../../models/file.model');  // Update this line to use the correct model
 const FlashCardSessionService = require('./flash_card_session.service'); // Add this line
 
-const OLLAMA_API_URL = 'http://localhost:11434/api/generate';
+const OLLAMA_API_URL = 'https://llm-system.tail973907.ts.net/api/generate';
 const OLLAMA_TIMEOUT = 300000;
 
 class FlashCardService {

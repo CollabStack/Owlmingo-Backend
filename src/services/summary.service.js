@@ -2,7 +2,7 @@ const axios = require('axios');
 const Summary = require('../models/summary.model');
 const { File } = require('../models/file.model');
 
-const OLLAMA_API_URL = 'https://llm-system-product-name.tail973907.ts.net/api/generate';
+const OLLAMA_API_URL = 'https://llm-system.tail973907.ts.net/api/generate';
 const OLLAMA_TIMEOUT = 100000;
 
 class SummaryService {
