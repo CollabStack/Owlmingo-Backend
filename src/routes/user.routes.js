@@ -11,11 +11,8 @@ const OtpService = require('../services/user/otp.service');
 const quizController = require('../controllers/quiz.controller');
 const { uploadMiddleware } = require('../middlewares/file_upload.middleware');
 const { getPlans, getPlan } = require('../controllers/Api/v1/user/plan.controller');
-<<<<<<< HEAD
 const { googleLogin, googleCallback, googleSuccess } = require('../controllers/Api/v1/user/google.controller');
-=======
 const SummaryController = require('../controllers/Api/v1/user/summary.controller');
->>>>>>> 886e1db78e004fa3ded7cdf6ad0bdd9d51336809
 
 // Public Routes
 router.post('/register', authController.register);
