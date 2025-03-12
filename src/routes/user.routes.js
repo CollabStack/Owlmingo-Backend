@@ -3,6 +3,7 @@ const multer = require('multer');
 const router = express.Router();
 const authController = require('../controllers/Api/v1/user/auth.controller');
 const userController = require('../controllers/Api/v1/user/change_password.controller');
+const githubController = require('../controllers/Api/v1/user/github.controller'); // Add this import
 const {userAuth} = require('../middlewares/auth.middleware');
 const { telegramOAuth } = require('../controllers/Api/v1/user/telegram.controller');
 const OcrController = require('../controllers/Api/v1/user/ocr.controller');
@@ -44,10 +45,9 @@ router.post('/reset-password', async (req, res) => {
 router.get('/google', googleLogin);
 router.get('/google/callback', googleCallback, googleSuccess);
 
-// Github OAuth
-router.get('/github', authController.githubLogin);
-router.get('/github/callback', authController.githubCallback, authController.githubSuccess);
-
+// Github OAuth - Fixed: Use the correct controller
+router.get('/github', githubController.githubLogin);
+router.get('/github/callback', githubController.githubCallback, githubController.githubSuccess);
 
 router.get('/plans', getPlans);
 router.get('/plans/:id', getPlan);
