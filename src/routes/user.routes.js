@@ -79,8 +79,7 @@ privateRouter.delete('/summaries/:globalId', SummaryController.deleteSummary);
 // Flash Card Routes
 privateRouter.post('/flashcards/generate', FlashCardController.generateFromText);
 privateRouter.post('/flashcards', FlashCardController.createFlashCard);
-privateRouter.get('/flashcards', FlashCardController.getAllFlashCards);
-privateRouter.get('/flashcards/:globalId', FlashCardController.getFlashCard);
+ privateRouter.get('/flashcards/:globalId', FlashCardController.getFlashCard);
 privateRouter.put('/flashcards/:globalId', FlashCardController.updateFlashCard);
 privateRouter.delete('/flashcards/:globalId', FlashCardController.deleteFlashCard);
 
