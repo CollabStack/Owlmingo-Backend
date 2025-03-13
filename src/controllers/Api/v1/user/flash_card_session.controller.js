@@ -5,20 +5,17 @@ class FlashCardSessionController {
     static async createSession(req, res) {
         try {
             const userId = req.user._id;
-            const { title, category, cardIds } = req.body;
+            const sessionData = req.body;
 
-            if (!title || !cardIds || !cardIds.length) {
+            if (!sessionData.title || !sessionData.cardIds || !sessionData.cardIds.length) {
                 return errorResponse(res, 'Title and card IDs are required', 400);
             }
 
-            const session = await FlashCardSessionService.createSession(userId, {
-                title, category, cardIds
-            });
-
-            return successResponse(res, session, 'Study session created successfully');
+            const session = await FlashCardSessionService.createSession(userId, sessionData);
+            return successResponse(res, session, 'Session created successfully');
         } catch (error) {
             console.error('Create session error:', error);
-            return errorResponse(res, error.message);
+            return errorResponse(res, error.message || 'Failed to create session');
         }
     }
 
@@ -26,22 +23,33 @@ class FlashCardSessionController {
         try {
             const userId = req.user._id;
             const sessions = await FlashCardSessionService.getUserSessions(userId);
-            return successResponse(res, sessions, 'Sessions retrieved successfully');
+            return successResponse(res, {
+                count: sessions.length,
+                sessions: sessions
+            }, 'Sessions retrieved successfully');
         } catch (error) {
-            return errorResponse(res, error.message);
+            console.error('Get sessions error:', error);
+            return errorResponse(res, error.message || 'Failed to retrieve sessions');
         }
     }
 
     static async getSession(req, res) {
         try {
             const { globalId } = req.params;
+            if (!globalId) {
+                return errorResponse(res, 'Session ID is required', 400);
+            }
+
             const session = await FlashCardSessionService.getSessionWithCards(globalId);
             if (!session) {
                 return errorResponse(res, 'Session not found', 404);
             }
+
             return successResponse(res, session, 'Session retrieved successfully');
         } catch (error) {
-            return errorResponse(res, error.message);
+            console.error('Get session error:', error);
+            return errorResponse(res, error.message || 'Failed to retrieve session', 
+                error.message.includes('not found') ? 404 : 500);
         }
     }
 
@@ -51,6 +59,14 @@ class FlashCardSessionController {
             const { sessionId, cardId } = req.params;
             const reviewData = req.body;
 
+            if (!sessionId || !cardId) {
+                return errorResponse(res, 'Session ID and Card ID are required', 400);
+            }
+
+            if (!reviewData.confidence || !reviewData.timeSpent) {
+                return errorResponse(res, 'Confidence and timeSpent are required', 400);
+            }
+
             const updatedSession = await FlashCardSessionService.updateCardReview(
                 userId, 
                 sessionId, 
@@ -58,9 +74,11 @@ class FlashCardSessionController {
                 reviewData
             );
 
-            return successResponse(res, updatedSession, 'Review updated successfully');
+            return successResponse(res, updatedSession, 'Card review updated successfully');
         } catch (error) {
-            return errorResponse(res, error.message);
+            console.error('Update card review error:', error);
+            return errorResponse(res, error.message || 'Failed to update card review',
+                error.message.includes('not found') ? 404 : 500);
         }
     }
 }

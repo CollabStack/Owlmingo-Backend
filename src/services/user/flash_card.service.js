@@ -3,7 +3,7 @@ const FlashCard = require('../../models/flash_card.model');
 const { File } = require('../../models/file.model');  // Update this line to use the correct model
 const FlashCardSessionService = require('./flash_card_session.service'); // Add this line
 
-const OLLAMA_API_URL = 'https://llm-system.tail973907.ts.net/api/generate';
+const OLLAMA_API_URL = 'http://localhost:11434/api/generate';
 const OLLAMA_TIMEOUT = 300000;
 
 class FlashCardService {
@@ -294,15 +294,111 @@ class FlashCardService {
         }
     }
 
-    static async deleteFlashCard(userId, globalId) {
+    static async updateFlashCardFlexible(userId, idParam, updateData) {
         try {
+            const { cardId, front, back, category, difficulty, status, nextReviewDate } = updateData;
+            
+            // Create a query that can match either _id or globalId
+            const query = {
+                created_by: userId,
+            };
+            
+            // Check if the id is a valid MongoDB ObjectId
+            if (idParam.match(/^[0-9a-fA-F]{24}$/)) {
+                query._id = idParam;
+            } else {
+                query.globalId = idParam;
+            }
+            
+            // If updating a specific card within the flash card
+            if (cardId) {
+                return await FlashCard.findOneAndUpdate(
+                    { 
+                        ...query,
+                        'cards._id': cardId 
+                    },
+                    { 
+                        $set: {
+                            'cards.$.front': front,
+                            'cards.$.back': back,
+                            'cards.$.category': category,
+                            'cards.$.difficulty': difficulty,
+                            'cards.$.status': status,
+                            'cards.$.nextReviewDate': nextReviewDate
+                        }
+                    },
+                    { new: true }
+                );
+            }
+
+            // Original code for updating the entire flash card
             return await FlashCard.findOneAndUpdate(
-                { globalId, userId },
-                { isActive: false },
+                query,
+                { ...updateData },
                 { new: true }
             );
         } catch (error) {
+            console.error('Error in updateFlashCardFlexible:', error);
+            throw error;
+        }
+    }
+
+    static async deleteFlashCard(userId, globalId) {
+        try {
+            return await FlashCard.findOneAndDelete({
+                globalId,
+                created_by: userId
+            });
+        } catch (error) {
             console.error('Error in deleteFlashCard:', error);
+            throw error;
+        }
+    }
+
+    static async deleteSpecificCard(userId, globalId, cardId) {
+        try {
+            // Create a flexible query that can match either _id or globalId
+            const query = {
+                created_by: userId,
+            };
+            
+            // Check if globalId is a valid MongoDB ObjectId
+            if (globalId.match(/^[0-9a-fA-F]{24}$/)) {
+                query._id = globalId;
+            } else {
+                query.globalId = globalId;
+            }
+
+            // First check if the flash card exists
+            const existingCard = await FlashCard.findOne({
+                ...query,
+                'cards._id': cardId
+            });
+
+            if (!existingCard) {
+                throw new Error('Flash card or specific card not found');
+            }
+
+            const flashCard = await FlashCard.findOneAndUpdate(
+                query,
+                { $pull: { cards: { _id: cardId } } },
+                { new: true }
+            );
+
+            if (!flashCard) {
+                throw new Error('Failed to delete card');
+            }
+
+            // Check if there are any cards left
+            if (flashCard.cards.length === 0) {
+                // If no cards left, delete the entire flash card
+                await FlashCard.findByIdAndDelete(flashCard._id);
+                return null;
+            }
+
+            return flashCard;
+        } catch (error) {
+            console.error('Error in deleteSpecificCard:', error);
             throw error;
         }
     }
@@ -346,7 +442,7 @@ class FlashCardService {
     static async addCardToFlashCard(userId, flashCardId, cardData) {
         try {
             const flashCard = await FlashCard.findOne({
-                flash_card_id: flashCardId,
+                _id: flashCardId,  // Changed from flash_card_id to _id
                 created_by: userId
             });
 
@@ -363,13 +459,42 @@ class FlashCardService {
                 nextReviewDate: new Date()
             };
 
-            // Add the new card to the cards array
             flashCard.cards.push(newCard);
             await flashCard.save();
 
             return flashCard;
         } catch (error) {
             console.error('Error in addCardToFlashCard:', error);
+            throw error;
+        }
+    }
+
+    static async getSpecificCard(userId, flashCardId, cardId) {
+        try {
+            const flashCard = await FlashCard.findOne({
+                _id: flashCardId,
+                created_by: userId,
+                'cards._id': cardId
+            }, {
+                'cards.$': 1
+            });
+
+            if (!flashCard) {
+                throw new Error('Flash card or specific card not found');
+            }
+
+            return flashCard.cards[0];
+        } catch (error) {
+            console.error('Error in getSpecificCard:', error);
+            throw error;
+        }
+    }
+
+    static async getAllFlashCards(userId) {
+        try {
+            return await FlashCard.find({ created_by: userId });
+        } catch (error) {
+            console.error('Error in getAllFlashCards:', error);
             throw error;
         }
     }

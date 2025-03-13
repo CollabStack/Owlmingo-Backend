@@ -76,18 +76,20 @@ privateRouter.get('/summariesTitle', SummaryController.getSummariesTitle);
 privateRouter.put('/summaries/:globalId', SummaryController.updateSummary);
 privateRouter.delete('/summaries/:globalId', SummaryController.deleteSummary);
 
-// Flash Card Routes
-privateRouter.post('/flashcards/generate', FlashCardController.generateFromText);
-privateRouter.post('/flashcards', FlashCardController.createFlashCard);
- privateRouter.get('/flashcards/:globalId', FlashCardController.getFlashCard);
-privateRouter.put('/flashcards/:globalId', FlashCardController.updateFlashCard);
-privateRouter.delete('/flashcards/:globalId', FlashCardController.deleteFlashCard);
-
-// Flash Card Session Routes
-privateRouter.post('/flashcards/sessions', FlashCardSessionController.createSession);
-privateRouter.get('/flashcards/sessions', FlashCardSessionController.getSessions);
+// Flash Card Session Routes 
 privateRouter.get('/flashcards/sessions/:globalId', FlashCardSessionController.getSession);
 privateRouter.post('/flashcards/sessions/:sessionId/cards/:cardId/review', FlashCardSessionController.updateCardReview);
+privateRouter.get('/flashcards/sessions', FlashCardSessionController.getSessions);
+
+// Flash Card Routes 
+privateRouter.post('/flashcards/generate', FlashCardController.generateFromText);
+privateRouter.post('/flashcards/:flashCardId/cards', FlashCardController.createFlashCard);  
+privateRouter.get('/flashcards/:globalId', FlashCardController.getAllFlashCard);
+privateRouter.get('/flashcards/:flashCardId/cards/:cardId', FlashCardController.getSpecificCard); 
+privateRouter.get('/flashcards', FlashCardController.getAllFlashCards);
+privateRouter.put('/flashcards/:globalId', FlashCardController.updateFlashCard);
+privateRouter.delete('/flashcards/:globalId', FlashCardController.deleteFlashCard);
+privateRouter.delete('/flashcards/:globalId/cards/:cardId', FlashCardController.deleteSpecificCard); 
 
 // Set prefix for private routes
 router.use('/auth', privateRouter);

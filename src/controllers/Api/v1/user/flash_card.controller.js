@@ -5,19 +5,20 @@ class FlashCardController {
     static async createFlashCard(req, res) {
         try {
             const userId = req.user._id;
-            const { title, front, back, category, difficulty } = req.body;
+            const { flashCardId } = req.params;  // Get from URL params instead of body
+            const { front, back, category, difficulty } = req.body;
 
-            if (!title || !front || !back) {
-                return errorResponse(res, 'Title, front, and back content are required', 400);
+            if (!front || !back) {
+                return errorResponse(res, 'Front and back content are required', 400);
             }
 
-            const flashCard = await FlashCardService.createFlashCard(userId, {
-                title, front, back, category, difficulty
+            const flashCard = await FlashCardService.addCardToFlashCard(userId, flashCardId, {
+                front, back, category, difficulty
             });
 
-            return successResponse(res, flashCard, 'Flash card created successfully');
+            return successResponse(res, flashCard, 'Card added to flash card successfully');
         } catch (error) {
-            console.error('Create flash card error:', error);
+            console.error('Add card error:', error);
             return errorResponse(res, error.message);
         }
     }
@@ -41,7 +42,7 @@ class FlashCardController {
         }
     }
 
-    static async getFlashCard(req, res) {
+    static async getAllFlashCard(req, res) {
         try {
             const userId = req.user._id;
             const { globalId } = req.params;
@@ -61,7 +62,7 @@ class FlashCardController {
     static async updateFlashCard(req, res) {
         try {
             const userId = req.user._id;
-            const { globalId } = req.params;
+            const idParam = req.params.globalId;
             const updateData = {
                 cardId: req.body._id,
                 front: req.body.front,
@@ -72,7 +73,8 @@ class FlashCardController {
                 nextReviewDate: req.body.nextReviewDate
             };
             
-            const flashCard = await FlashCardService.updateFlashCard(userId, globalId, updateData);
+            // Modify the service call to accept either _id or globalId
+            const flashCard = await FlashCardService.updateFlashCardFlexible(userId, idParam, updateData);
             if (!flashCard) {
                 return errorResponse(res, 'Flash card not found', 404);
             }
@@ -98,6 +100,25 @@ class FlashCardController {
         } catch (error) {
             console.error('Delete flash card error:', error);
             return errorResponse(res, error.message);
+        }
+    }
+
+    static async deleteSpecificCard(req, res) {
+        try {
+            const userId = req.user._id;
+            const { globalId, cardId } = req.params;
+
+            const flashCard = await FlashCardService.deleteSpecificCard(userId, globalId, cardId);
+            
+            // If flashCard is null, it means the last card was deleted and the flash card was removed
+            if (flashCard === null) {
+                return successResponse(res, null, 'Last card deleted and flash card removed successfully');
+            }
+
+            return successResponse(res, flashCard, 'Card deleted successfully');
+        } catch (error) {
+            console.error('Delete specific card error:', error);
+            return errorResponse(res, error.message, 404);
         }
     }
 
@@ -151,6 +172,38 @@ class FlashCardController {
 
             return successResponse(res, flashCard, 'Card status updated successfully');
         } catch (error) {
+            return errorResponse(res, error.message);
+        }
+    }
+
+    static async getSpecificCard(req, res) {
+        try {
+            const userId = req.user._id;
+            const { flashCardId, cardId } = req.params;
+
+            const flashCard = await FlashCardService.getSpecificCard(userId, flashCardId, cardId);
+            if (!flashCard) {
+                return errorResponse(res, 'Flash card or specific card not found', 404);
+            }
+
+            return successResponse(res, flashCard, 'Specific card retrieved successfully');
+        } catch (error) {
+            console.error('Get specific card error:', error);
+            return errorResponse(res, error.message);
+        }
+    }
+
+    static async getAllFlashCards(req, res) {
+        try {
+            const userId = req.user._id;
+            const flashCards = await FlashCardService.getAllFlashCards(userId);
+
+            return successResponse(res, {
+                count: flashCards.length,
+                flashCards
+            }, 'All flash cards retrieved successfully');
+        } catch (error) {
+            console.error('Get all flash cards error:', error);
             return errorResponse(res, error.message);
         }
     }

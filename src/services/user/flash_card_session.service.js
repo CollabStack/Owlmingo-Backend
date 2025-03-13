@@ -39,51 +39,111 @@ class FlashCardSessionService {
         }
     }
 
-    static async getSessionWithCards(globalId) {
-        return await FlashCardSession.findOne({ globalId })
-            .populate('cards.cardId')
+    static async getUserSessions(userId) {
+        try {
+            const sessions = await FlashCardSession.find({
+                userId,
+                isActive: true
+            })
+            .select('-reviewHistory') // Exclude review history for list view
+            .sort({ updatedAt: -1 })
+            .populate({
+                path: 'cards.cardId',
+                match: { created_by: userId }, // Add this to filter cards by user
+                select: 'front back category difficulty'
+            })
             .lean();
+
+            // Filter out sessions with no valid cards
+            const validSessions = sessions.filter(session => 
+                session.cards.some(card => card.cardId)
+            );
+
+            return validSessions.map(session => ({
+                ...session,
+                cardCount: session.cards.length,
+                progress: {
+                    mastered: session.progress.mastered,
+                    learning: session.progress.learning,
+                    toReview: session.progress.toReview,
+                    total: session.cards.length
+                }
+            }));
+        } catch (error) {
+            console.error('Error in getUserSessions:', error);
+            throw new Error('Failed to fetch user sessions');
+        }
     }
 
-    static async getUserSessions(userId) {
-        return await FlashCardSession.find({
-            userId,
-            isActive: true
-        })
-        .sort({ lastStudied: -1 })
-        .lean();
+    static async getSessionWithCards(globalId) {
+        try {
+            const session = await FlashCardSession.findOne({ globalId })
+                .populate({
+                    path: 'cards.cardId',
+                    select: 'front back category difficulty'
+                })
+                .lean();
+
+            if (!session) {
+                throw new Error('Session not found');
+            }
+
+            return {
+                ...session,
+                progress: {
+                    ...session.progress,
+                    total: session.cards.length
+                }
+            };
+        } catch (error) {
+            console.error('Error in getSessionWithCards:', error);
+            throw error;
+        }
     }
 
     static async updateCardReview(userId, sessionId, cardId, reviewData) {
-        const { confidence, timeSpent } = reviewData;
-        const session = await FlashCardSession.findOne({ globalId: sessionId, userId });
-        
-        if (!session) throw new Error('Session not found');
+        try {
+            const { confidence, timeSpent } = reviewData;
+            if (!confidence || !timeSpent) {
+                throw new Error('Confidence and timeSpent are required');
+            }
 
-        const cardIndex = session.cards.findIndex(c => c.cardId.toString() === cardId);
-        if (cardIndex === -1) throw new Error('Card not found in session');
+            const session = await FlashCardSession.findOne({ 
+                globalId: sessionId, 
+                userId,
+                isActive: true
+            });
+            
+            if (!session) throw new Error('Session not found');
 
-        const card = session.cards[cardIndex];
-        const newStatus = this.calculateNewStatus(confidence, card.status);
-        const nextReview = this.calculateNextReviewDate(confidence);
+            const cardIndex = session.cards.findIndex(c => c.cardId.toString() === cardId);
+            if (cardIndex === -1) throw new Error('Card not found in session');
 
-        // Update card review data
-        card.status = newStatus;
-        card.confidence = confidence;
-        card.nextReviewDate = nextReview;
-        card.reviewHistory.push({
-            date: new Date(),
-            confidence,
-            timeSpent
-        });
+            const card = session.cards[cardIndex];
+            const newStatus = this.calculateNewStatus(confidence, card.status);
+            const nextReview = this.calculateNextReviewDate(confidence);
 
-        // Update session progress
-        this.updateSessionProgress(session);
-        
-        session.lastStudied = new Date();
-        await session.save();
+            // Update card review data
+            card.status = newStatus;
+            card.confidence = confidence;
+            card.nextReviewDate = nextReview;
+            card.reviewHistory.push({
+                date: new Date(),
+                confidence,
+                timeSpent: parseInt(timeSpent)
+            });
 
-        return await this.getSessionWithCards(sessionId);
+            // Update session progress
+            this.updateSessionProgress(session);
+            session.lastStudied = new Date();
+            await session.save();
+
+            // Return updated session with populated cards
+            return await this.getSessionWithCards(sessionId);
+        } catch (error) {
+            console.error('Error in updateCardReview:', error);
+            throw error;
+        }
     }
 
     static calculateNewStatus(confidence, currentStatus) {
