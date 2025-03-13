@@ -199,6 +199,26 @@ class FlashCardSessionService {
 
         session.progress = progress;
     }
+
+    static async getSessionsByFlashCard(userId, flashCardId) {
+        try {
+            const sessions = await FlashCardSession.find({
+                userId,
+                'cards.cardId': flashCardId,
+                isActive: true
+            })
+            .populate({
+                path: 'cards.cardId',
+                select: 'front back category difficulty'
+            })
+            .lean();
+
+            return sessions || [];
+        } catch (error) {
+            console.error('Error in getSessionsByFlashCard:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = FlashCardSessionService;

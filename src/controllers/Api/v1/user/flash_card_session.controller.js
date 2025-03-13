@@ -1,5 +1,6 @@
 const { successResponse, errorResponse } = require('../../baseAPI.controller');
 const FlashCardSessionService = require('../../../../services/user/flash_card_session.service');
+const FlashCardSession = require('../../../../models/flash_card_session.model');
 
 class FlashCardSessionController {
     static async createSession(req, res) {
@@ -79,6 +80,24 @@ class FlashCardSessionController {
             console.error('Update card review error:', error);
             return errorResponse(res, error.message || 'Failed to update card review',
                 error.message.includes('not found') ? 404 : 500);
+        }
+    }
+
+    static async getSessionsByFlashCard(req, res) {
+        try {
+            const userId = req.user._id;
+            const { flashCardId } = req.params;
+            
+            if (!flashCardId) {
+                return errorResponse(res, 'Flash card ID is required', 400);
+            }
+
+            const sessions = await FlashCardSessionService.getSessionsByFlashCard(userId, flashCardId);
+            
+            return successResponse(res, sessions, 'Sessions retrieved successfully');
+        } catch (error) {
+            console.error('Get sessions by flash card error:', error);
+            return errorResponse(res, error.message || 'Failed to retrieve sessions', 500);
         }
     }
 }

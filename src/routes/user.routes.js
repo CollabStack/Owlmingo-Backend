@@ -78,6 +78,7 @@ privateRouter.delete('/summaries/:globalId', SummaryController.deleteSummary);
 
 // Flash Card Session Routes 
 privateRouter.get('/flashcards/sessions/:globalId', FlashCardSessionController.getSession);
+privateRouter.get('/flashcards/:flashCardId/sessions', FlashCardSessionController.getSessionsByFlashCard);
 privateRouter.post('/flashcards/sessions/:sessionId/cards/:cardId/review', FlashCardSessionController.updateCardReview);
 privateRouter.get('/flashcards/sessions', FlashCardSessionController.getSessions);
 
