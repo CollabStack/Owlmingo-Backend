@@ -2,7 +2,7 @@ const axios = require('axios');
 const Summary = require('../models/summary.model');
 const { File } = require('../models/file.model');
 
-const OLLAMA_API_URL = 'https://llm-system-product-name.tail973907.ts.net/api/generate';
+const OLLAMA_API_URL = 'https://llm-system.tail973907.ts.net/api/generate';
 const OLLAMA_TIMEOUT = 100000;
 
 class SummaryService {
@@ -15,13 +15,14 @@ class SummaryService {
             const requestData = {
                 prompt: `Please generate a concise, objective summary of the text provided below. Follow these guidelines closely:
               1. **Identify and capture the main ideas:** Extract key arguments, main points, and conclusions without adding personal opinions.
-              2. **Structure your summary:** Write a coherent summary in 2-3 paragraphs ensuring logical flow and clarity.
+              2. **Structure your summary:** Write a coherent summary in 4-5  paragraphs ensuring logical flow and clarity.
               3. **Use professional language:** Ensure that the tone is clear, factual, and avoids unnecessary embellishments.
               4. **Maintain factual accuracy:** Only include information that is explicitly present in the text.
               5. **Be succinct but comprehensive:** Your summary should be detailed enough to cover the essence of the text without being verbose.
               6. **Strictly adhere to the JSON format:** Return your response solely in valid JSON, using exactly these keys:
                  - "title": A brief, descriptive title (preferably under 8 words).
                  - "content": The generated summary text.
+                 
               
               Text to summarize:
               ${text}
@@ -41,6 +42,7 @@ class SummaryService {
                 timeout: OLLAMA_TIMEOUT,
                 headers: {
                     'Content-Type': 'application/json'
+                    
                 }
             });
 

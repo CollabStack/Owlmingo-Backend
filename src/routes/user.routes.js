@@ -14,6 +14,9 @@ const { uploadMiddleware } = require('../middlewares/file_upload.middleware');
 const { getPlans, getPlan } = require('../controllers/Api/v1/user/plan.controller');
 const { googleLogin, googleCallback, googleSuccess } = require('../controllers/Api/v1/user/google.controller');
 const SummaryController = require('../controllers/Api/v1/user/summary.controller');
+const FlashCardController = require('../controllers/Api/v1/user/flash_card.controller');
+const FlashCardSessionController = require('../controllers/Api/v1/user/flash_card_session.controller');
+
 
 // Public Routes
 router.post('/register', authController.register);
@@ -61,6 +64,7 @@ privateRouter.post('/change-password', userController.changePassword);
 
 privateRouter.post('/process-file', uploadMiddleware, OcrController.processFile);
 privateRouter.post('/process-text', OcrController.processText);
+privateRouter.post('/process-youtube', OcrController.processYoutube);
 
 // Quiz Routes
 privateRouter.post('/quiz/generate', quizController.generateQuiz);
@@ -81,6 +85,22 @@ privateRouter.get('/summaries', SummaryController.getAllSummaries);
 privateRouter.get('/summariesTitle', SummaryController.getSummariesTitle); 
 privateRouter.put('/summaries/:globalId', SummaryController.updateSummary);
 privateRouter.delete('/summaries/:globalId', SummaryController.deleteSummary);
+
+// Flash Card Session Routes 
+privateRouter.get('/flashcards/sessions/:globalId', FlashCardSessionController.getSession);
+privateRouter.get('/flashcards/:flashCardId/sessions', FlashCardSessionController.getSessionsByFlashCard);
+privateRouter.post('/flashcards/sessions/:sessionId/cards/:cardId/review', FlashCardSessionController.updateCardReview);
+privateRouter.get('/flashcards/sessions', FlashCardSessionController.getSessions);
+
+// Flash Card Routes 
+privateRouter.post('/flashcards/generate', FlashCardController.generateFromText);
+privateRouter.post('/flashcards/:flashCardId/cards', FlashCardController.createFlashCard);  
+privateRouter.get('/flashcards/:globalId', FlashCardController.getAllFlashCard);
+privateRouter.get('/flashcards/:flashCardId/cards/:cardId', FlashCardController.getSpecificCard); 
+privateRouter.get('/flashcards', FlashCardController.getAllFlashCards);
+privateRouter.put('/flashcards/:globalId', FlashCardController.updateFlashCard);
+privateRouter.delete('/flashcards/:globalId', FlashCardController.deleteFlashCard);
+privateRouter.delete('/flashcards/:globalId/cards/:cardId', FlashCardController.deleteSpecificCard); 
 
 // Set prefix for private routes
 router.use('/auth', privateRouter);

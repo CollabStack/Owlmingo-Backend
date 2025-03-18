@@ -37,7 +37,10 @@
     "pdf.js-extract": "^0.2.1",
     "readable-stream": "^4.4.2",
     "tesseract.js": "^6.0.0",
-    "uuid": "^11.0.5"
+    "uuid": "^11.0.5",
+    "youtube-captions-scraper": "^2.0.3",
+    "youtube-transcript": "^1.2.1",
+    "youtube-transcript-api": "^1.1.2"
   },
   "devDependencies": {
     "jest": "^27.5.1",
