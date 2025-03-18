@@ -64,6 +64,7 @@ privateRouter.post('/change-password', userController.changePassword);
 
 privateRouter.post('/process-file', uploadMiddleware, OcrController.processFile);
 privateRouter.post('/process-text', OcrController.processText);
+privateRouter.post('/process-youtube', OcrController.processYoutube);
 
 // Quiz Routes
 privateRouter.post('/quiz/generate', quizController.generateQuiz);
