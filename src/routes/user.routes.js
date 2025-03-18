@@ -42,8 +42,8 @@ router.post('/reset-password', async (req, res) => {
 });
 
 // Google OAuth
-router.get('/google', googleLogin);
-router.get('/google/callback', googleCallback, googleSuccess);
+router.post('/google', googleLogin);
+router.post('/google/callback', googleCallback, googleSuccess);
 
 // Github OAuth - Fixed: Use the correct controller
 router.get('/github', githubController.githubLogin);
