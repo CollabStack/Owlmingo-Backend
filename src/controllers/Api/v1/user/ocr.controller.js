@@ -1,7 +1,9 @@
 const OcrService = require('../../../../services/ocr.service');
 const { successResponse, errorResponse } = require('../../baseAPI.controller');
-const {uploadFile} = require('../../../../services/upload_file.service');
+const { uploadFile } = require('../../../../services/upload_file.service');
+const { YoutubeTranscript } = require('youtube-transcript');
 const File = require('../../../../models/file.model');
+
 class OcrController {
     static async processFile(req, res) {
         try {
@@ -54,6 +56,85 @@ class OcrController {
             return errorResponse(res, error.message, 500);
         }
     }
+
+    static async processYoutube(req, res) {
+        try {
+            const { url } = req.body;
+            if (!url) {
+                return errorResponse(res, 'YouTube URL is required', 400);
+            }
+
+            // Extract video ID from the URL
+            const videoId = extractVideoId(url);
+            if (!videoId) {
+                return errorResponse(res, 'Invalid YouTube URL', 400);
+            }
+
+            try {
+                // Fetch transcripts
+                const transcripts = await YoutubeTranscript.fetchTranscript(videoId);
+                
+                if (!transcripts || transcripts.length === 0) {
+                    return errorResponse(res, 'No subtitles found for this video', 404);
+                }
+
+                // Process transcripts with timestamps
+                const processedText = transcripts
+                    .map(item => `[${formatTime(item.offset)}] ${item.text}`)
+                    .join('\n');
+
+                // Create metadata
+                const metadata = {
+                    originalFileName: `youtube_${videoId}.txt`,
+                    fileSize: Buffer.byteLength(processedText, 'utf8'),
+                    mimeType: 'text/plain',
+                    source: 'youtube',
+                    videoId: videoId,
+                    videoUrl: url,
+                    duration: transcripts[transcripts.length - 1]?.offset || 0
+                };
+
+                const result = await OcrService.processText(
+                    processedText,
+                    req.user._id,
+                    metadata
+                );
+
+                return successResponse(res, {
+                    ...result,
+                    videoId,
+                    videoUrl: url
+                }, 'YouTube transcripts processed successfully');
+
+            } catch (transcriptError) {
+                console.error('Error fetching transcripts:', transcriptError);
+                return errorResponse(res, 'Failed to fetch video transcripts. The video might not have subtitles or might be private.', 400);
+            }
+        } catch (error) {
+            console.error('Error processing YouTube URL:', error);
+            return errorResponse(res, 'Internal server error', 500);
+        }
+    }
+}
+
+// Helper functions
+function extractVideoId(url) {
+    const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+}
+
+function formatTime(milliseconds) {
+    const seconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    
+    const pad = (num) => num.toString().padStart(2, '0');
+    
+    if (hours > 0) {
+        return `${pad(hours)}:${pad(minutes % 60)}:${pad(seconds % 60)}`;
+    }
+    return `${pad(minutes)}:${pad(seconds % 60)}`;
 }
 
 module.exports = OcrController;
