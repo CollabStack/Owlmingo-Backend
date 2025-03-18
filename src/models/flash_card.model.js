@@ -29,9 +29,15 @@ const flashCardSchema = new mongoose.Schema({
             type: String,
             required: true
         },
+        frontImage: {
+            type: String // Optional URL for front image
+        },
         back: {
             type: String,
             required: true
+        },
+        backImage: {
+            type: String // Optional URL for back image
         },
         category: String,
         difficulty: {
