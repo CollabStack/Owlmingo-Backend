@@ -57,11 +57,11 @@ const githubCallback = (req, res, next) => {
         }
         try {
             // Check if user already exists by either GitHub ID or email
-            let existingUser = await User.findOne({ 
+            let existingUser = await User.findOne({
                 $or: [
-                    { githubId: user.id }, 
+                    { githubId: user.id },
                     { email: user.emails[0].value }
-                ] 
+                ]
             });
 
             if (!existingUser) {
