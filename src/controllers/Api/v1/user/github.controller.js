@@ -3,7 +3,7 @@ const User = require('../../../../models/user.model');
 const {redirectURL} = require('../../../../config/app.config');
 const {jwt} = require('../../../../utils/jwt.util');
 // GitHub login function
-const githubLogin = passport.authenticate('github', { scope: ['user:email'] });
+const {generateToken}  = passport.authenticate('github', { scope: ['user:email'] });
 
 // GitHub callback function
 // const githubCallback = passport.authenticate('github', { failureRedirect: 'http://localhost:3001' });
@@ -82,7 +82,7 @@ const githubCallback = (req, res, next) => {
                 }
             }
 
-            const token = jwt.generateToken(existingUser);
+            const token = generateToken(existingUser);
             console.log("========= token =========");
             console.log("token", token);
             return res.redirect(redirectURL + `#token=${token}`);
