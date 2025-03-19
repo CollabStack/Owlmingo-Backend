@@ -1,5 +1,6 @@
 const { successResponse, errorResponse } = require('../../baseAPI.controller');
 const FlashCardService = require('../../../../services/user/flash_card.service');
+const { uploadFile } = require('../../../../services/upload_file.service');
 
 class FlashCardController {
     static async createFlashCard(req, res) {
@@ -204,6 +205,104 @@ class FlashCardController {
             }, 'All flash cards retrieved successfully');
         } catch (error) {
             console.error('Get all flash cards error:', error);
+            return errorResponse(res, error.message);
+        }
+    }
+
+    static async uploadCardImages(req, res) {
+        try {
+            const userId = req.user._id;
+            const { globalId, cardId } = req.params;
+            const imageUrls = {};
+
+            if (req.files) {
+                if (req.files.frontImage) {
+                    const frontImageFile = req.files.frontImage[0];
+                    const frontImageName = `flashcards/${userId}/${Date.now()}-front-${frontImageFile.originalname}`;
+                    imageUrls.frontImage = await uploadFile(frontImageFile.buffer, frontImageName);
+                }
+                
+                if (req.files.backImage) {
+                    const backImageFile = req.files.backImage[0];
+                    const backImageName = `flashcards/${userId}/${Date.now()}-back-${backImageFile.originalname}`;
+                    imageUrls.backImage = await uploadFile(backImageFile.buffer, backImageName);
+                }
+            }
+
+            if (Object.keys(imageUrls).length === 0) {
+                return errorResponse(res, 'No images provided', 400);
+            }
+
+            const flashCard = await FlashCardService.updateCardImages(userId, globalId, cardId, imageUrls);
+            return successResponse(res, flashCard, 'Card images updated successfully');
+        } catch (error) {
+            console.error('Upload card images error:', error);
+            return errorResponse(res, error.message);
+        }
+    }
+
+    static async uploadFrontImage(req, res) {
+        try {
+            const userId = req.user._id;
+            const { globalId, cardId } = req.params;
+            const imageUrls = {};
+
+            if (!req.file) {
+                return errorResponse(res, 'No image provided', 400);
+            }
+
+            const frontImageName = `flashcards/${userId}/${Date.now()}-front-${req.file.originalname}`;
+            imageUrls.frontImage = await uploadFile(req.file.buffer, frontImageName);
+
+            const flashCard = await FlashCardService.updateCardImages(userId, globalId, cardId, imageUrls);
+            return successResponse(res, flashCard, 'Front image updated successfully');
+        } catch (error) {
+            console.error('Upload front image error:', error);
+            return errorResponse(res, error.message);
+        }
+    }
+
+    static async uploadBackImage(req, res) {
+        try {
+            const userId = req.user._id;
+            const { globalId, cardId } = req.params;
+            const imageUrls = {};
+
+            if (!req.file) {
+                return errorResponse(res, 'No image provided', 400);
+            }
+
+            const backImageName = `flashcards/${userId}/${Date.now()}-back-${req.file.originalname}`;
+            imageUrls.backImage = await uploadFile(req.file.buffer, backImageName);
+
+            const flashCard = await FlashCardService.updateCardImages(userId, globalId, cardId, imageUrls);
+            return successResponse(res, flashCard, 'Back image updated successfully');
+        } catch (error) {
+            console.error('Upload back image error:', error);
+            return errorResponse(res, error.message);
+        }
+    }
+
+    static async examCard(req, res) {
+        try {
+            const userId = req.user._id;
+            const { globalId, cardId } = req.params;
+            const { userAnswer } = req.body;
+
+            if (!userAnswer) {
+                return errorResponse(res, 'Answer is required', 400);
+            }
+
+            const result = await FlashCardService.evaluateAnswer(
+                userId,
+                globalId,
+                cardId,
+                userAnswer
+            );
+
+            return successResponse(res, result, 'Answer evaluated successfully');
+        } catch (error) {
+            console.error('Exam answer evaluation error:', error);
             return errorResponse(res, error.message);
         }
     }

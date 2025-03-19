@@ -29,9 +29,15 @@ const flashCardSchema = new mongoose.Schema({
             type: String,
             required: true
         },
+        frontImage: {
+            type: String // Optional URL for front image
+        },
         back: {
             type: String,
             required: true
+        },
+        backImage: {
+            type: String // Optional URL for back image
         },
         category: String,
         difficulty: {
@@ -47,7 +53,21 @@ const flashCardSchema = new mongoose.Schema({
         nextReviewDate: {
             type: Date,
             default: Date.now
-        }
+        },
+        examHistory: [{
+            userAnswer: String,
+            score: Number,
+            feedback: {
+                whatWasIncorrect: String,
+                whatCouldBeIncluded: String, // Changed from array to string
+                keyPointsCovered: [String],
+                missingPoints: [String]
+            },
+            evaluatedAt: {
+                type: Date,
+                default: Date.now
+            }
+        }]
     }],
     created_by: {
         type: mongoose.Schema.Types.ObjectId,

@@ -3,7 +3,7 @@ const FlashCard = require('../../models/flash_card.model');
 const { File } = require('../../models/file.model');  // Update this line to use the correct model
 const FlashCardSessionService = require('./flash_card_session.service'); // Add this line
 
-const OLLAMA_API_URL = 'http://localhost:11434/api/generate';
+const OLLAMA_API_URL = 'https://llm-system.tail973907.ts.net/api/generate';
 const OLLAMA_TIMEOUT = 300000;
 
 class FlashCardService {
@@ -495,6 +495,130 @@ class FlashCardService {
             return await FlashCard.find({ created_by: userId });
         } catch (error) {
             console.error('Error in getAllFlashCards:', error);
+            throw error;
+        }
+    }
+
+    static async updateCardImages(userId, globalId, cardId, imageData) {
+        try {
+            const query = {
+                created_by: userId,
+                'cards._id': cardId
+            };
+
+            // Check if globalId is a valid MongoDB ObjectId
+            if (globalId.match(/^[0-9a-fA-F]{24}$/)) {
+                query._id = globalId;
+            } else {
+                query.globalId = globalId;
+            }
+
+            const updateFields = {};
+            if (imageData.frontImage) {
+                updateFields['cards.$.frontImage'] = imageData.frontImage;
+            }
+            if (imageData.backImage) {
+                updateFields['cards.$.backImage'] = imageData.backImage;
+            }
+
+            const flashCard = await FlashCard.findOneAndUpdate(
+                query,
+                { $set: updateFields },
+                { new: true }
+            );
+
+            if (!flashCard) {
+                throw new Error('Flash card or card not found');
+            }
+
+            return flashCard;
+        } catch (error) {
+            console.error('Error in updateCardImages:', error);
+            throw error;
+        }
+    }
+
+    static async evaluateAnswer(userId, globalId, cardId, userAnswer) {
+        try {
+            const flashCard = await FlashCard.findOne({
+                globalId,
+                created_by: userId,
+                'cards._id': cardId
+            });
+
+            if (!flashCard) {
+                throw new Error('Flash card not found');
+            }
+
+            const card = flashCard.cards.find(c => c._id.toString() === cardId);
+
+            const requestData = {
+                prompt: `You are an expert educational evaluator. Analyze and provide detailed feedback on the student's answer.
+
+Question: "${card.front}"
+Correct Answer: "${card.back}"
+Student's Answer: "${userAnswer}"
+
+Instructions:
+1. First, understand the key concepts and requirements from the correct answer
+2. Compare the student's response with these key concepts
+3. Pay attention to both factual accuracy and conceptual understanding
+4. Consider partial credit for partially correct answers
+
+Return a JSON response in this exact format - note that whatWasIncorrect and whatCouldBeIncluded must be strings, not arrays:
+{
+    "isCorrect": boolean (true if >= 90% accurate),
+    "score": number (0-100),
+    "feedback": {
+        "whatWasIncorrect": "single string describing what was wrong",
+        "whatCouldBeIncluded": "single string with suggestions",
+        "keyPointsCovered": ["array of correct points mentioned"],
+        "missingPoints": ["array of important points missed"]
+    }
+}
+
+Ensure your response matches this format exactly.`,
+                model: 'llama3.2:latest',
+                stream: false,
+                temperature: 0.3
+            };
+
+            const response = await axios.post(OLLAMA_API_URL, requestData, {
+                timeout: OLLAMA_TIMEOUT,
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const evaluation = JSON.parse(response.data.response);
+
+            // Format the exam history entry to match the schema
+            const examEntry = {
+                userAnswer: userAnswer,
+                score: evaluation.score,
+                feedback: {
+                    whatWasIncorrect: evaluation.feedback.whatWasIncorrect,
+                    whatCouldBeIncluded: evaluation.feedback.whatCouldBeIncluded,
+                    keyPointsCovered: evaluation.feedback.keyPointsCovered || [],
+                    missingPoints: evaluation.feedback.missingPoints || []
+                },
+                evaluatedAt: new Date()
+            };
+
+            // Update the document
+            await FlashCard.updateOne(
+                { 
+                    globalId,
+                    'cards._id': cardId 
+                },
+                { 
+                    $push: {
+                        'cards.$.examHistory': examEntry
+                    }
+                }
+            );
+
+            return evaluation;
+        } catch (error) {
+            console.error('Error in evaluateAnswer:', error);
             throw error;
         }
     }
