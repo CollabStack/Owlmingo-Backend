@@ -36,6 +36,8 @@ const githubCallback = (req, res, next) => {
             //     return res.redirect(redirectURL); // Redirect to success URL
             // });
             const token = jwt.generateToken(existingUser);
+            console.log("========= token =========");
+            console.log("token", token);
             return res.redirect(redirectURL + `#token=${token}`);
         } catch (error) {
             return next(error); // Pass the error to the error-handling middleware
