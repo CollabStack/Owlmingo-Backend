@@ -18,7 +18,7 @@ const githubCallback = (req, res, next) => {
         }
         try {
             // Check if the user already exists in the database
-            let existingUser = await User.findOne({ githubId: user.id });
+            let existingUser = await User.findOne({ github_id: user.id });
             if (!existingUser) {
                 // Create a new user if not found
                 console.log("================ User =================");
