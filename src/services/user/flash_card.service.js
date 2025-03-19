@@ -622,6 +622,31 @@ Ensure your response matches this format exactly.`,
             throw error;
         }
     }
+
+    static async toggleShareFlashCard(userId, globalId, isPublic) {
+        try {
+            return await FlashCard.findOneAndUpdate(
+                { globalId, created_by: userId },
+                { isPublic: Boolean(isPublic) },
+                { new: true }
+            );
+        } catch (error) {
+            console.error('Error in toggleShareFlashCard:', error);
+            throw error;
+        }
+    }
+
+    static async getSharedFlashCard(globalId) {
+        try {
+            return await FlashCard.findOne({
+                globalId,
+                isPublic: true
+            });
+        } catch (error) {
+            console.error('Error in getSharedFlashCard:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = FlashCardService;
