@@ -306,6 +306,43 @@ class FlashCardController {
             return errorResponse(res, error.message);
         }
     }
+
+    static async toggleShareFlashCard(req, res) {
+        try {
+            const userId = req.user._id;
+            const { globalId } = req.params;
+            const { isPublic } = req.body;
+
+            const flashCard = await FlashCardService.toggleShareFlashCard(userId, globalId, isPublic);
+            if (!flashCard) {
+                return errorResponse(res, 'Flash card not found', 404);
+            }
+
+            return successResponse(res, { 
+                isPublic: flashCard.isPublic,
+                shareUrl: flashCard.isPublic ? `/shared/flashcards/${flashCard.globalId}` : null
+            }, `Flash card ${flashCard.isPublic ? 'shared' : 'unshared'} successfully`);
+        } catch (error) {
+            console.error('Toggle share flash card error:', error);
+            return errorResponse(res, error.message);
+        }
+    }
+
+    static async getSharedFlashCard(req, res) {
+        try {
+            const { globalId } = req.params;
+            
+            const flashCard = await FlashCardService.getSharedFlashCard(globalId);
+            if (!flashCard) {
+                return errorResponse(res, 'Shared flash card not found', 404);
+            }
+
+            return successResponse(res, flashCard, 'Shared flash card retrieved successfully');
+        } catch (error) {
+            console.error('Get shared flash card error:', error);
+            return errorResponse(res, error.message);
+        }
+    }
 }
 
 module.exports = FlashCardController;

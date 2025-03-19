@@ -117,7 +117,13 @@ privateRouter.post(
     FlashCardController.uploadBackImage
 );
 
+// Add route for sharing flash cards
+privateRouter.put('/flashcards/:globalId/share', FlashCardController.toggleShareFlashCard);
+
 // Set prefix for private routes
 router.use('/auth', privateRouter);
+
+// Public route for shared flashcards
+router.get('/shared/flashcards/:globalId', FlashCardController.getSharedFlashCard);
 
 module.exports = router;
