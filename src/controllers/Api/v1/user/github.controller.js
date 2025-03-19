@@ -7,6 +7,50 @@ const githubLogin = passport.authenticate('github', { scope: ['user:email'] });
 
 // GitHub callback function
 // const githubCallback = passport.authenticate('github', { failureRedirect: 'http://localhost:3001' });
+// const githubCallback = (req, res, next) => {
+//     passport.authenticate('github', async (err, user, info) => {
+//         if (err) {
+//             return next(err); // Handle any Passport-specific errors
+//         }
+
+//         if (!user) {
+//             return res.status(401).send('Authentication failed: User not found');
+//         }
+//         try {
+//             // Check if the user already exists in the database
+//             let existingUser = await User.findOne({ github_id: user.id, email: user.emails[0].value });
+//             console.log("=============== existingUser ================");
+//             console.log(existingUser);
+//             if (!existingUser) {
+//                 console.log("=============== Create User before create ================");
+//                 // Create a new user if not found
+//                 existingUser = new User({
+//                     github_id: user.id,
+//                     username: user.username,
+//                     email: user.emails[0].value, // Use the first email from GitHub
+//                 });
+//                 await existingUser.save();
+//                 console.log("=============== Create User ================");
+//                 console.log(existingUser);
+//             }
+
+//             // Log the user in
+//             // req.logIn(existingUser, (err) => {
+//             //     if (err) {
+//             //         return next(err); // Handle login errors
+//             //     }
+//             //     return res.redirect(redirectURL); // Redirect to success URL
+//             // });
+//             const token = generateToken(existingUser);
+//             console.log("=============== token ================");
+//             console.log(token);
+//             res.redirect(redirectURL + `#token=${token}`);
+//         } catch (error) {
+//             return next(error); // Pass the error to the error-handling middleware
+//         }
+//     })(req, res, next); // Invoke Passport's authenticate function
+// };
+
 const githubCallback = (req, res, next) => {
     passport.authenticate('github', async (err, user, info) => {
         if (err) {
@@ -16,11 +60,16 @@ const githubCallback = (req, res, next) => {
         if (!user) {
             return res.status(401).send('Authentication failed: User not found');
         }
+
         try {
-            // Check if the user already exists in the database
-            let existingUser = await User.findOne({ githubId: user.id, email: user.emails[0].value });
+            // Find user by GitHub ID or email
+            let existingUser = await User.findOne({
+                $or: [{ github_id: user.id }, { email: user.emails[0].value }]
+            });
+
             console.log("=============== existingUser ================");
             console.log(existingUser);
+
             if (!existingUser) {
                 console.log("=============== Create User before create ================");
                 // Create a new user if not found
@@ -30,26 +79,31 @@ const githubCallback = (req, res, next) => {
                     email: user.emails[0].value, // Use the first email from GitHub
                 });
                 await existingUser.save();
-                console.log("=============== Create User ================");
+                console.log("=============== Created New User ================");
                 console.log(existingUser);
+            } else if (!existingUser.github_id) {
+                // If user exists but doesn't have a GitHub ID, update it
+                existingUser.github_id = user.id;
+                await existingUser.save();
+                console.log("=============== Updated User with GitHub ID ================");
+                console.log(existingUser);
+            } else {
+                console.log("=============== User already exists ================");
             }
 
-            // Log the user in
-            // req.logIn(existingUser, (err) => {
-            //     if (err) {
-            //         return next(err); // Handle login errors
-            //     }
-            //     return res.redirect(redirectURL); // Redirect to success URL
-            // });
+            // Generate JWT token
             const token = generateToken(existingUser);
-            console.log("=============== token ================");
+
+            console.log("=============== Generated Token ================");
             console.log(token);
-            res.redirect(redirectURL + `#token=${token}`);
+
+            res.redirect(`${redirectURL}#token=${token}`);
         } catch (error) {
             return next(error); // Pass the error to the error-handling middleware
         }
     })(req, res, next); // Invoke Passport's authenticate function
 };
+
 
 // Successful authentication handler
 const githubSuccess = (req, res) => {
