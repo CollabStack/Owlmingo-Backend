@@ -19,6 +19,8 @@ const githubCallback = (req, res, next) => {
         try {
             // Check if the user already exists in the database
             let existingUser = await User.findOne({ githubId: user.id, email: user.emails[0].value });
+            console.log("=============== existingUser ================");
+            console.log(existingUser);
             if (!existingUser) {
                 // Create a new user if not found
                 existingUser = new User({
@@ -27,6 +29,8 @@ const githubCallback = (req, res, next) => {
                     email: user.emails[0].value, // Use the first email from GitHub
                 });
                 await existingUser.save();
+                console.log("=============== Create User ================");
+                console.log(existingUser);
             }
 
             // Log the user in
@@ -37,6 +41,8 @@ const githubCallback = (req, res, next) => {
             //     return res.redirect(redirectURL); // Redirect to success URL
             // });
             const token = generateToken(existingUser);
+            console.log("=============== token ================");
+            console.log(token);
             res.redirect(redirectURL + `#token=${token}`);
         } catch (error) {
             return next(error); // Pass the error to the error-handling middleware
