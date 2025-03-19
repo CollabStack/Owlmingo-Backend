@@ -69,6 +69,10 @@ const flashCardSchema = new mongoose.Schema({
             }
         }]
     }],
+    isPublic: {
+        type: Boolean,
+        default: false
+    },
     created_by: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
