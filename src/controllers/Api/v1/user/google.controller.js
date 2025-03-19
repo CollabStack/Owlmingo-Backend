@@ -35,7 +35,7 @@ const googleCallback = (req, res, next) => {
         await existingUser.save();
       }
       const token = jwtUtil.generateToken({ global_id: existingUser.global_id, role: existingUser.role });
-      return res.redirect(`${redirectURL}?token=${token}`);
+      return res.redirect(`${redirectURL}#token=${token}`);
     } catch (error) {
       return next(error); // Pass the error to the error-handling middleware
     }
