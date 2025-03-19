@@ -22,6 +22,7 @@ const githubCallback = (req, res, next) => {
             console.log("=============== existingUser ================");
             console.log(existingUser);
             if (!existingUser) {
+                console.log("=============== Create User before create ================");
                 // Create a new user if not found
                 existingUser = new User({
                     github_id: user.id,
