@@ -553,26 +553,31 @@ class FlashCardService {
             const card = flashCard.cards.find(c => c._id.toString() === cardId);
 
             const requestData = {
-                prompt: `As an education expert, evaluate this student's answer:
-                
-                Question: "${card.front}"
-                Correct answer: "${card.back}"
-                Student's answer: "${userAnswer}"
-                
-                Analyze the answer and provide feedback in this exact JSON format:
-                {
-                    "isCorrect": boolean,
-                    "score": number between 0-100,
-                    "feedback": {
-                        "whatWasIncorrect": "Clear explanation of what was wrong or missing",
-                        "whatCouldBeIncluded": "Explain Specific suggestions on what is the right answer",
-                        "keyPointsCovered": ["list of correct points made"],
-                        "missingPoints": ["list of important points missed"]
-                    }
-                }
-                
-                Focus on conceptual understanding rather than exact wording matches.
-                Return ONLY valid JSON, no other text.`,
+                prompt: `You are an expert educational evaluator. Analyze and provide detailed feedback on the student's answer.
+
+Question: "${card.front}"
+Correct Answer: "${card.back}"
+Student's Answer: "${userAnswer}"
+
+Instructions:
+1. First, understand the key concepts and requirements from the correct answer
+2. Compare the student's response with these key concepts
+3. Pay attention to both factual accuracy and conceptual understanding
+4. Consider partial credit for partially correct answers
+
+Return a JSON response in this exact format - note that whatWasIncorrect and whatCouldBeIncluded must be strings, not arrays:
+{
+    "isCorrect": boolean (true if >= 90% accurate),
+    "score": number (0-100),
+    "feedback": {
+        "whatWasIncorrect": "single string describing what was wrong",
+        "whatCouldBeIncluded": "single string with suggestions",
+        "keyPointsCovered": ["array of correct points mentioned"],
+        "missingPoints": ["array of important points missed"]
+    }
+}
+
+Ensure your response matches this format exactly.`,
                 model: 'llama3.2:latest',
                 stream: false,
                 temperature: 0.3
@@ -585,7 +590,20 @@ class FlashCardService {
 
             const evaluation = JSON.parse(response.data.response);
 
-            // Save the evaluation result
+            // Format the exam history entry to match the schema
+            const examEntry = {
+                userAnswer: userAnswer,
+                score: evaluation.score,
+                feedback: {
+                    whatWasIncorrect: evaluation.feedback.whatWasIncorrect,
+                    whatCouldBeIncluded: evaluation.feedback.whatCouldBeIncluded,
+                    keyPointsCovered: evaluation.feedback.keyPointsCovered || [],
+                    missingPoints: evaluation.feedback.missingPoints || []
+                },
+                evaluatedAt: new Date()
+            };
+
+            // Update the document
             await FlashCard.updateOne(
                 { 
                     globalId,
@@ -593,12 +611,7 @@ class FlashCardService {
                 },
                 { 
                     $push: {
-                        'cards.$.examHistory': {
-                            userAnswer,
-                            score: evaluation.score,
-                            feedback: evaluation.feedback,
-                            evaluatedAt: new Date()
-                        }
+                        'cards.$.examHistory': examEntry
                     }
                 }
             );

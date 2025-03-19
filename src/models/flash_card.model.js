@@ -59,11 +59,14 @@ const flashCardSchema = new mongoose.Schema({
             score: Number,
             feedback: {
                 whatWasIncorrect: String,
-                whatCouldBeIncluded: String,
+                whatCouldBeIncluded: String, // Changed from array to string
                 keyPointsCovered: [String],
                 missingPoints: [String]
             },
-            evaluatedAt: Date
+            evaluatedAt: {
+                type: Date,
+                default: Date.now
+            }
         }]
     }],
     created_by: {
