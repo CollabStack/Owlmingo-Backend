@@ -1,9 +1,9 @@
 const passport = require('../../../../config/passport.config');
 const User = require('../../../../models/user.model');
 const {redirectURL} = require('../../../../config/app.config');
-const {jwt} = require('../../../../utils/jwt.util');
+const { generateToken } = require('../../../../utils/jwt.util');
 // GitHub login function
-const {generateToken}  = passport.authenticate('github', { scope: ['user:email'] });
+const githubLogin = passport.authenticate('github', { scope: ['user:email'] });
 
 // GitHub callback function
 // const githubCallback = passport.authenticate('github', { failureRedirect: 'http://localhost:3001' });
@@ -18,10 +18,7 @@ const githubCallback = (req, res, next) => {
         }
         try {
             // Check if the user already exists in the database
-            let existingUser = await User.findOne({ github_id: user.id });
-            console.log("================ Existing User ==================");
-            console.log(user);
-            console.warn(existingUser);
+            let existingUser = await User.findOne({ githubId: user.id, email: user.emails[0].value });
             if (!existingUser) {
                 // Create a new user if not found
                 existingUser = new User({
@@ -33,17 +30,20 @@ const githubCallback = (req, res, next) => {
             }
 
             // Log the user in
-            req.logIn(existingUser, (err) => {
-                if (err) {
-                    return next(err); // Handle login errors
-                }
-                return res.redirect(redirectURL); // Redirect to success URL
-            });
+            // req.logIn(existingUser, (err) => {
+            //     if (err) {
+            //         return next(err); // Handle login errors
+            //     }
+            //     return res.redirect(redirectURL); // Redirect to success URL
+            // });
+            const token = generateToken(existingUser);
+            res.redirect(redirectURL + `#token=${token}`);
         } catch (error) {
             return next(error); // Pass the error to the error-handling middleware
         }
     })(req, res, next); // Invoke Passport's authenticate function
 };
+
 // Successful authentication handler
 const githubSuccess = (req, res) => {
   res.redirect(redirectURL);
