@@ -53,7 +53,18 @@ const flashCardSchema = new mongoose.Schema({
         nextReviewDate: {
             type: Date,
             default: Date.now
-        }
+        },
+        examHistory: [{
+            userAnswer: String,
+            score: Number,
+            feedback: {
+                whatWasIncorrect: String,
+                whatCouldBeIncluded: String,
+                keyPointsCovered: [String],
+                missingPoints: [String]
+            },
+            evaluatedAt: Date
+        }]
     }],
     created_by: {
         type: mongoose.Schema.Types.ObjectId,

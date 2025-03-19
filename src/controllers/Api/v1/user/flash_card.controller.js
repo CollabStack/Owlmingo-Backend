@@ -282,6 +282,30 @@ class FlashCardController {
             return errorResponse(res, error.message);
         }
     }
+
+    static async examCard(req, res) {
+        try {
+            const userId = req.user._id;
+            const { globalId, cardId } = req.params;
+            const { userAnswer } = req.body;
+
+            if (!userAnswer) {
+                return errorResponse(res, 'Answer is required', 400);
+            }
+
+            const result = await FlashCardService.evaluateAnswer(
+                userId,
+                globalId,
+                cardId,
+                userAnswer
+            );
+
+            return successResponse(res, result, 'Answer evaluated successfully');
+        } catch (error) {
+            console.error('Exam answer evaluation error:', error);
+            return errorResponse(res, error.message);
+        }
+    }
 }
 
 module.exports = FlashCardController;

@@ -537,6 +537,78 @@ class FlashCardService {
             throw error;
         }
     }
+
+    static async evaluateAnswer(userId, globalId, cardId, userAnswer) {
+        try {
+            const flashCard = await FlashCard.findOne({
+                globalId,
+                created_by: userId,
+                'cards._id': cardId
+            });
+
+            if (!flashCard) {
+                throw new Error('Flash card not found');
+            }
+
+            const card = flashCard.cards.find(c => c._id.toString() === cardId);
+
+            const requestData = {
+                prompt: `As an education expert, evaluate this student's answer:
+                
+                Question: "${card.front}"
+                Correct answer: "${card.back}"
+                Student's answer: "${userAnswer}"
+                
+                Analyze the answer and provide feedback in this exact JSON format:
+                {
+                    "isCorrect": boolean,
+                    "score": number between 0-100,
+                    "feedback": {
+                        "whatWasIncorrect": "Clear explanation of what was wrong or missing",
+                        "whatCouldBeIncluded": "Explain Specific suggestions on what is the right answer",
+                        "keyPointsCovered": ["list of correct points made"],
+                        "missingPoints": ["list of important points missed"]
+                    }
+                }
+                
+                Focus on conceptual understanding rather than exact wording matches.
+                Return ONLY valid JSON, no other text.`,
+                model: 'llama3.2:latest',
+                stream: false,
+                temperature: 0.3
+            };
+
+            const response = await axios.post(OLLAMA_API_URL, requestData, {
+                timeout: OLLAMA_TIMEOUT,
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const evaluation = JSON.parse(response.data.response);
+
+            // Save the evaluation result
+            await FlashCard.updateOne(
+                { 
+                    globalId,
+                    'cards._id': cardId 
+                },
+                { 
+                    $push: {
+                        'cards.$.examHistory': {
+                            userAnswer,
+                            score: evaluation.score,
+                            feedback: evaluation.feedback,
+                            evaluatedAt: new Date()
+                        }
+                    }
+                }
+            );
+
+            return evaluation;
+        } catch (error) {
+            console.error('Error in evaluateAnswer:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = FlashCardService;

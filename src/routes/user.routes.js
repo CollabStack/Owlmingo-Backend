@@ -102,6 +102,8 @@ privateRouter.put('/flashcards/:globalId', FlashCardController.updateFlashCard);
 privateRouter.delete('/flashcards/:globalId', FlashCardController.deleteFlashCard);
 privateRouter.delete('/flashcards/:globalId/cards/:cardId', FlashCardController.deleteSpecificCard); 
 
+privateRouter.post('/flashcards/:globalId/cards/:cardId/exam', FlashCardController.examCard);
+
 // Remove the multipleUpload configuration and use single file upload
 privateRouter.post(
     '/flashcards/:globalId/cards/:cardId/images/front',
