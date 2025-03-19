@@ -18,6 +18,9 @@ const githubCallback = (req, res, next) => {
         try {
             // Check if the user already exists in the database
             let existingUser = await User.findOne({ githubId: user.id });
+            console.log("================ Existing User ==================");
+            console.log(user);
+            console.warn(existingUser);
             if (!existingUser) {
                 // Create a new user if not found
                 existingUser = new User({
@@ -51,3 +54,4 @@ module.exports = {
   githubCallback,
   githubSuccess,
 };
+// https://owlmingo.space/auth#tgAuthResult=eyJpZCI6NTE3Nzk0OTM1LCJmaXJzdF9uYW1lIjoiVWNoIiwibGFzdF9uYW1lIjoiTWVuZ2x5IFx1ZDgzZFx1ZGU4MCIsInVzZXJuYW1lIjoiTWVuZ2x5VWNoIiwicGhvdG9fdXJsIjoiaHR0cHM6XC9cL3QubWVcL2lcL3VzZXJwaWNcLzMyMFwvU0J5WjI4dGZQQ0ZTbk5SRmJMVUwtS0ZHQTRhcENNMmlXRFlrSkNIQ2Vidy5qcGciLCJhdXRoX2RhdGUiOjE3NDIzNTc3NTUsImhhc2giOiIxYTE0M2ZlYjE2YjY1MzZiOTNjY2JhZDk2NDFkNTZjMGQ3OTM5Mjc5ODAwMjE0Njk5MTM4OThhOTVmMGI1MzE1In0
