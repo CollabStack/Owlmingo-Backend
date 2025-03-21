@@ -67,11 +67,7 @@ const githubCallback = (req, res, next) => {
                 $or: [{ github_id: user.id }, { email: user.emails[0].value }]
             });
 
-            console.log("=============== existingUser ================");
-            console.log(existingUser);
-
             if (!existingUser) {
-                console.log("=============== Create User before create ================");
                 // Create a new user if not found
                 existingUser = new User({
                     github_id: user.id,
@@ -79,24 +75,14 @@ const githubCallback = (req, res, next) => {
                     email: user.emails[0].value, // Use the first email from GitHub
                 });
                 await existingUser.save();
-                console.log("=============== Created New User ================");
-                console.log(existingUser);
             } else if (!existingUser.github_id) {
                 // If user exists but doesn't have a GitHub ID, update it
                 existingUser.github_id = user.id;
                 await existingUser.save();
-                console.log("=============== Updated User with GitHub ID ================");
-                console.log(existingUser);
-            } else {
-                console.log("=============== User already exists ================");
-            }
+            } 
 
             // Generate JWT token
             const token = generateToken(existingUser);
-
-            console.log("=============== Generated Token ================");
-            console.log(token);
-
             res.redirect(`${redirectURL}#token=${token}`);
         } catch (error) {
             return next(error); // Pass the error to the error-handling middleware
