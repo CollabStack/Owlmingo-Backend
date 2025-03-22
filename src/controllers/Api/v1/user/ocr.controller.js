@@ -70,8 +70,16 @@ class OcrController {
                 return errorResponse(res, 'Invalid YouTube URL', 400);
             }
 
+            // First check if video is accessible before attempting transcript
             try {
-                // Use the YouTube service instead of direct API call
+                const accessCheck = await YoutubeService.validateVideoAccessibility(videoId);
+                if (!accessCheck.accessible) {
+                    return errorResponse(res, `Video is not accessible: ${accessCheck.error}`, 400);
+                }
+                
+                console.log(`Processing video: "${accessCheck.title}" by ${accessCheck.author}`);
+                
+                // After confirming video is accessible, try to get transcript
                 const transcripts = await YoutubeService.getTranscript(videoId);
                 
                 if (!transcripts || transcripts.length === 0) {
@@ -91,6 +99,8 @@ class OcrController {
                     source: 'youtube',
                     videoId: videoId,
                     videoUrl: url,
+                    videoTitle: accessCheck.title,
+                    videoAuthor: accessCheck.author,
                     duration: transcripts[transcripts.length - 1]?.offset || 0
                 };
 
@@ -103,17 +113,28 @@ class OcrController {
                 return successResponse(res, {
                     ...result,
                     videoId,
-                    videoUrl: url
+                    videoUrl: url,
+                    videoTitle: accessCheck.title
                 }, 'YouTube transcripts processed successfully');
 
             } catch (transcriptError) {
                 console.error('Error fetching transcripts:', transcriptError);
                 
-                // More specific error messages based on error type
+                // Environment-specific debugging info
+                const environment = process.env.NODE_ENV || 'development';
+                const isHeroku = process.env.DYNO ? true : false;
+                console.log(`Current environment: ${environment}, Running on Heroku: ${isHeroku}`);
+                
+                // More specific error messages based on error type and environment
                 if (transcriptError.message.includes('Transcript is disabled')) {
-                    return errorResponse(res, 'This video does not have available transcripts. The creator may have disabled them.', 400);
-                } else if (transcriptError.message.includes('private')) {
+                    const message = isHeroku ? 
+                        'This video does not have available transcripts. Some videos may work locally but not on Heroku due to regional restrictions.' : 
+                        'This video does not have available transcripts. The creator may have disabled them.';
+                    return errorResponse(res, message, 400);
+                } else if (transcriptError.message.includes('private') || transcriptError.message.includes('restricted')) {
                     return errorResponse(res, 'Unable to access video transcripts. The video might be private or restricted.', 400);
+                } else if (transcriptError.message.includes('Network') && isHeroku) {
+                    return errorResponse(res, 'Network access to YouTube might be restricted on Heroku. Try a different video or contact support.', 400);
                 } else {
                     return errorResponse(res, `Failed to fetch video transcripts: ${transcriptError.message}`, 400);
                 }
