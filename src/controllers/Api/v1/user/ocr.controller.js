@@ -127,16 +127,16 @@ class OcrController {
                 
                 // More specific error messages based on error type and environment
                 if (transcriptError.message.includes('Transcript is disabled')) {
-                    const message = isHeroku ? 
-                        'This video does not have available transcripts. Some videos may work locally but not on Heroku due to regional restrictions.' : 
-                        'This video does not have available transcripts. The creator may have disabled them.';
-                    return errorResponse(res, message, 400);
+                    return errorResponse(res, 
+                        'This video does not have available transcripts. Please try a video with "CC" (closed captions) enabled.', 
+                        400
+                    );
                 } else if (transcriptError.message.includes('private') || transcriptError.message.includes('restricted')) {
                     return errorResponse(res, 'Unable to access video transcripts. The video might be private or restricted.', 400);
                 } else if (transcriptError.message.includes('Network') && isHeroku) {
-                    return errorResponse(res, 'Network access to YouTube might be restricted on Heroku. Try a different video or contact support.', 400);
+                    return errorResponse(res, 'Network access to YouTube might be restricted on your server. Try a different video or contact support.', 400);
                 } else {
-                    return errorResponse(res, `Failed to fetch video transcripts: ${transcriptError.message}`, 400);
+                    return errorResponse(res, `Failed to fetch video transcripts: ${transcriptError.message}. Please try a video with English subtitles enabled.`, 400);
                 }
             }
         } catch (error) {
