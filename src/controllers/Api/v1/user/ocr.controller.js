@@ -1,7 +1,7 @@
 const OcrService = require('../../../../services/ocr.service');
 const { successResponse, errorResponse } = require('../../baseAPI.controller');
 const { uploadFile } = require('../../../../services/upload_file.service');
-const { YoutubeTranscript } = require('youtube-transcript');
+const YoutubeService = require('../../../../services/youtube.service');
 const File = require('../../../../models/file.model');
 
 class OcrController {
@@ -71,8 +71,8 @@ class OcrController {
             }
 
             try {
-                // Fetch transcripts
-                const transcripts = await YoutubeTranscript.fetchTranscript(videoId);
+                // Use the YouTube service instead of direct API call
+                const transcripts = await YoutubeService.getTranscript(videoId);
                 
                 if (!transcripts || transcripts.length === 0) {
                     return errorResponse(res, 'No subtitles found for this video', 404);
@@ -108,7 +108,15 @@ class OcrController {
 
             } catch (transcriptError) {
                 console.error('Error fetching transcripts:', transcriptError);
-                return errorResponse(res, 'Failed to fetch video transcripts. The video might not have subtitles or might be private.', 400);
+                
+                // More specific error messages based on error type
+                if (transcriptError.message.includes('Transcript is disabled')) {
+                    return errorResponse(res, 'This video does not have available transcripts. The creator may have disabled them.', 400);
+                } else if (transcriptError.message.includes('private')) {
+                    return errorResponse(res, 'Unable to access video transcripts. The video might be private or restricted.', 400);
+                } else {
+                    return errorResponse(res, `Failed to fetch video transcripts: ${transcriptError.message}`, 400);
+                }
             }
         } catch (error) {
             console.error('Error processing YouTube URL:', error);
