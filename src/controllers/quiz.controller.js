@@ -589,3 +589,35 @@ exports.getQuizWithAnswers = async (req, res) => {
     res.status(500).send({ message: 'Error fetching questions with answers', error: error.message });
   }
 };
+
+// Function to get all quizzes for the current user
+exports.getAllQuizzes = async (req, res) => {
+  try {
+    // Find all quizzes created by the current user
+    const quizzes = await Quiz.find({ created_by: req.user._id });
+    
+    // Format the response
+    const formattedQuizzes = quizzes.map(quiz => ({
+      quizId: quiz.quiz_id,
+      title: quiz.quiz_title,
+      totalQuestions: quiz.questions.length,
+      createdAt: quiz.createdAt,
+      updatedAt: quiz.updatedAt,
+      source: {
+        fileOcrId: quiz.source?.fileOcrId,
+        extractedTextSegmentPreview: quiz.source?.extractedTextSegment?.substring(0, 100) + '...'
+      }
+    }));
+
+    res.status(200).send({
+      count: quizzes.length,
+      quizzes: formattedQuizzes
+    });
+  } catch (error) {
+    console.error('Error fetching all quizzes:', error);
+    res.status(500).send({ 
+      message: 'Error fetching quizzes', 
+      error: error.message 
+    });
+  }
+};
