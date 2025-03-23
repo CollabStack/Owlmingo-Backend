@@ -51,6 +51,14 @@ exports.createQuestion = async (req, res) => {
 // Function to generate quiz questions from extracted text using Ollama
 exports.generateQuiz = async (req, res) => {
   try {
+    // Check if request is properly formatted
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).send({ 
+        message: 'Request body is missing or empty',
+        hint: 'Make sure you\'re sending a POST request with Content-Type: application/json and the fileOcrId in the request body' 
+      });
+    }
+    
     const { fileOcrId } = req.body;
     if (!fileOcrId) {
       return res.status(400).send({ message: 'FileOcrId is required' });
@@ -67,7 +75,6 @@ exports.generateQuiz = async (req, res) => {
       return res.status(403).send({ message: 'Unauthorized access to this file' });
     }
 
-
     // Use the data field from the file document
     if (!fileOcr.data) {
       return res.status(400).send({ message: 'No text content found in file' });
@@ -83,9 +90,7 @@ exports.generateQuiz = async (req, res) => {
       quiz_title: generatedQuiz.title || 'Generated Quiz',
       source: {
         fileOcrId,
-
-        extractedTextSegment: fileOcr.data // Use the data field here
-
+        extractedTextSegment: fileOcr.data
       },
       questions: generatedQuiz.questions,
       created_by: req.user._id
@@ -103,9 +108,7 @@ exports.generateQuiz = async (req, res) => {
       source: {
         fileOcrId: fileOcr._id,
         fileName: fileOcr.metadata?.originalFileName,
-
         fileType: fileOcr.type
-
       },
       quiz: {
         totalQuestions: generatedQuiz.questions.length,
@@ -118,6 +121,9 @@ exports.generateQuiz = async (req, res) => {
 
     await quizSession.save();
 
+    // Check for test mode (either development or explicitly requested)
+    const isTestMode = process.env.NODE_ENV === 'development' || req.query.testMode === 'true';
+
     // Format questions for response
     const formattedQuestions = quiz.questions.map((q, index) => ({
       questionIndex: index,
@@ -125,7 +131,7 @@ exports.generateQuiz = async (req, res) => {
       options: q.options.map(opt => ({
         id: opt._id,
         text: opt.text,
-        ...(process.env.NODE_ENV === 'development' && { isCorrect: opt.isCorrect })
+        ...(isTestMode && { isCorrect: opt.isCorrect })
       }))
     }));
 
@@ -133,9 +139,7 @@ exports.generateQuiz = async (req, res) => {
       quizId,
       title: quiz.quiz_title,
       questionCount: quiz.questions.length,
-
       fileType: fileOcr.type,
-
       fileName: fileOcr.metadata?.originalFileName,
       questions: formattedQuestions,
       session: {
