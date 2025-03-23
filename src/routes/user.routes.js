@@ -77,6 +77,8 @@ privateRouter.get('/quiz/:quizId/answers', quizController.getQuizAnswers);
 privateRouter.put('/quiz/:quizId/questions/:questionIndex', quizController.updateQuestion);
 privateRouter.put('/quiz/:quizId/title', quizController.updateQuizTitle);
 privateRouter.get('/quiz/:quizId/review', quizController.getQuizReview);
+// Add this new route for development/testing - allows getting quiz with answers
+privateRouter.get('/quiz/:quizId/with-answers', quizController.getQuizWithAnswers);
 
 // Summary Routes
 privateRouter.post('/summaries', SummaryController.createSummary);

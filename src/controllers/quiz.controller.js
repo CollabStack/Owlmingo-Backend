@@ -164,14 +164,17 @@ exports.getQuestionsByQuizId = async (req, res) => {
       return res.status(404).send({ message: 'Quiz not found' });
     }
 
+    // Check for test mode (either development or explicitly requested)
+    const isTestMode = process.env.NODE_ENV === 'development' || req.query.testMode === 'true';
+
     const formattedQuestions = quiz.questions.map((q, index) => ({
       questionIndex: index,
       question: q.question,
       options: q.options.map(opt => ({
         id: opt._id,
         text: opt.text,
-        // Only send isCorrect in development environment
-        ...(process.env.NODE_ENV === 'development' && { isCorrect: opt.isCorrect })
+        // Only send isCorrect in development environment or test mode
+        ...(isTestMode && { isCorrect: opt.isCorrect })
       }))
     }));
 
@@ -300,11 +303,13 @@ exports.submitAnswer = async (req, res) => {
 
     await answer.save();
 
+    // Check for test mode (either development or explicitly requested)
+    const isTestMode = process.env.NODE_ENV === 'development' || req.query.testMode === 'true';
+
     res.status(200).send({
       success: true,
       isCorrect: selectedOptionObj.isCorrect,
-      correctOption: process.env.NODE_ENV === 'development' ? 
-        question.options.find(opt => opt.isCorrect)._id : undefined,
+      correctOption: isTestMode ? question.options.find(opt => opt.isCorrect)._id : undefined,
       progress: {
         answeredCount: quizSession.quiz.answeredCount,
         correctCount: quizSession.quiz.correctCount,
@@ -409,6 +414,9 @@ exports.updateQuestion = async (req, res) => {
 
     await quiz.save();
 
+    // Check for test mode (either development or explicitly requested)
+    const isTestMode = process.env.NODE_ENV === 'development' || req.query.testMode === 'true';
+
     // Format response
     const updatedQuestion = {
       questionIndex: parseInt(questionIndex),
@@ -416,7 +424,7 @@ exports.updateQuestion = async (req, res) => {
       options: quiz.questions[questionIndex].options.map(opt => ({
         id: opt._id,
         text: opt.text,
-        ...(process.env.NODE_ENV === 'development' && { isCorrect: opt.isCorrect })
+        ...(isTestMode && { isCorrect: opt.isCorrect })
       }))
     };
 
@@ -539,12 +547,45 @@ exports.getQuizReview = async (req, res) => {
       },
       questions: reviewData
     });
-
   } catch (error) {
     console.error('Get quiz review error:', error);
     res.status(500).send({ 
       message: 'Error fetching quiz review', 
       error: error.message 
     });
+  }
+};
+
+// Function to get a quiz with all answers (for development/testing)
+exports.getQuizWithAnswers = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+    const quiz = await Quiz.findOne({ quiz_id: quizId });
+    
+    if (!quiz) {
+      return res.status(404).send({ message: 'Quiz not found' });
+    }
+
+    // Format questions with correct answers always visible
+    const formattedQuestions = quiz.questions.map((q, index) => ({
+      questionIndex: index,
+      question: q.question,
+      options: q.options.map(opt => ({
+        id: opt._id,
+        text: opt.text,
+        isCorrect: opt.isCorrect
+      }))
+    }));
+
+    res.status(200).send({
+      quizId: quiz.quiz_id,
+      title: quiz.quiz_title,
+      totalQuestions: quiz.questions.length,
+      questions: formattedQuestions,
+      note: "This endpoint is for development and testing purposes only"
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).send({ message: 'Error fetching questions with answers', error: error.message });
   }
 };
