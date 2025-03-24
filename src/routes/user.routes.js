@@ -55,9 +55,6 @@ router.get('/github/callback', githubController.githubCallback, githubController
 router.get('/plans', getPlans);
 router.get('/plans/:id', getPlan);
 
-// Set prefix for private routes
-router.use('/auth', privateRouter);
-
 // Public route for shared flashcards
 router.get('/shared/flashcards/:globalId', FlashCardController.getSharedFlashCard);
 
@@ -132,5 +129,6 @@ privateRouter.put('/flashcards/:globalId/share', FlashCardController.toggleShare
 
 privateRouter.post('/create-order', payment);
 privateRouter.post('/capture-order', capture);
-
+// Set prefix for private routes
+router.use('/auth', privateRouter);
 module.exports = router;
