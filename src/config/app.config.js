@@ -20,4 +20,6 @@ module.exports = {
     googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
     googleCallbackURL : process.env.GOOGLE_CALLBACK_URL,
     redirectURL       : process.env.REDIRECT_URL,
+    paypalClientID    : process.env.PAYPAL_CLIENT_ID,
+    paypalSecret      : process.env.PAYPAL_SECRET,
 };
