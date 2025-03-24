@@ -83,6 +83,10 @@ privateRouter.get('/quiz/:quizId/answers', quizController.getQuizAnswers);
 privateRouter.put('/quiz/:quizId/questions/:questionIndex', quizController.updateQuestion);
 privateRouter.put('/quiz/:quizId/title', quizController.updateQuizTitle);
 privateRouter.get('/quiz/:quizId/review', quizController.getQuizReview);
+privateRouter.get('/quiz/:quizId/with-answers', quizController.getQuizWithAnswers);
+privateRouter.get('/quiz/:quizId/with-answer', quizController.getQuizWithAnswers); // For compatibility
+// Add new route to get all quizzes
+privateRouter.get('/quizzes', quizController.getAllQuizzes);
 
 // Summary Routes
 privateRouter.post('/summaries', SummaryController.createSummary);

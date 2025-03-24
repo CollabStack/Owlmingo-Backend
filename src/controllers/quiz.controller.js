@@ -51,6 +51,14 @@ exports.createQuestion = async (req, res) => {
 // Function to generate quiz questions from extracted text using Ollama
 exports.generateQuiz = async (req, res) => {
   try {
+    // Check if request is properly formatted
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).send({ 
+        message: 'Request body is missing or empty',
+        hint: 'Make sure you\'re sending a POST request with Content-Type: application/json and the fileOcrId in the request body' 
+      });
+    }
+    
     const { fileOcrId } = req.body;
     if (!fileOcrId) {
       return res.status(400).send({ message: 'FileOcrId is required' });
@@ -67,7 +75,6 @@ exports.generateQuiz = async (req, res) => {
       return res.status(403).send({ message: 'Unauthorized access to this file' });
     }
 
-
     // Use the data field from the file document
     if (!fileOcr.data) {
       return res.status(400).send({ message: 'No text content found in file' });
@@ -83,9 +90,7 @@ exports.generateQuiz = async (req, res) => {
       quiz_title: generatedQuiz.title || 'Generated Quiz',
       source: {
         fileOcrId,
-
-        extractedTextSegment: fileOcr.data // Use the data field here
-
+        extractedTextSegment: fileOcr.data
       },
       questions: generatedQuiz.questions,
       created_by: req.user._id
@@ -103,9 +108,7 @@ exports.generateQuiz = async (req, res) => {
       source: {
         fileOcrId: fileOcr._id,
         fileName: fileOcr.metadata?.originalFileName,
-
         fileType: fileOcr.type
-
       },
       quiz: {
         totalQuestions: generatedQuiz.questions.length,
@@ -118,6 +121,9 @@ exports.generateQuiz = async (req, res) => {
 
     await quizSession.save();
 
+    // Check for test mode (either development or explicitly requested)
+    const isTestMode = process.env.NODE_ENV === 'development' || req.query.testMode === 'true';
+
     // Format questions for response
     const formattedQuestions = quiz.questions.map((q, index) => ({
       questionIndex: index,
@@ -125,7 +131,7 @@ exports.generateQuiz = async (req, res) => {
       options: q.options.map(opt => ({
         id: opt._id,
         text: opt.text,
-        ...(process.env.NODE_ENV === 'development' && { isCorrect: opt.isCorrect })
+        ...(isTestMode && { isCorrect: opt.isCorrect })
       }))
     }));
 
@@ -133,9 +139,7 @@ exports.generateQuiz = async (req, res) => {
       quizId,
       title: quiz.quiz_title,
       questionCount: quiz.questions.length,
-
       fileType: fileOcr.type,
-
       fileName: fileOcr.metadata?.originalFileName,
       questions: formattedQuestions,
       session: {
@@ -160,14 +164,17 @@ exports.getQuestionsByQuizId = async (req, res) => {
       return res.status(404).send({ message: 'Quiz not found' });
     }
 
+    // Check for test mode (either development or explicitly requested)
+    const isTestMode = process.env.NODE_ENV === 'development' || req.query.testMode === 'true';
+
     const formattedQuestions = quiz.questions.map((q, index) => ({
       questionIndex: index,
       question: q.question,
       options: q.options.map(opt => ({
         id: opt._id,
         text: opt.text,
-        // Only send isCorrect in development environment
-        ...(process.env.NODE_ENV === 'development' && { isCorrect: opt.isCorrect })
+        // Only send isCorrect in development environment or test mode
+        ...(isTestMode && { isCorrect: opt.isCorrect })
       }))
     }));
 
@@ -296,11 +303,13 @@ exports.submitAnswer = async (req, res) => {
 
     await answer.save();
 
+    // Check for test mode (either development or explicitly requested)
+    const isTestMode = process.env.NODE_ENV === 'development' || req.query.testMode === 'true';
+
     res.status(200).send({
       success: true,
       isCorrect: selectedOptionObj.isCorrect,
-      correctOption: process.env.NODE_ENV === 'development' ? 
-        question.options.find(opt => opt.isCorrect)._id : undefined,
+      correctOption: isTestMode ? question.options.find(opt => opt.isCorrect)._id : undefined,
       progress: {
         answeredCount: quizSession.quiz.answeredCount,
         correctCount: quizSession.quiz.correctCount,
@@ -405,6 +414,9 @@ exports.updateQuestion = async (req, res) => {
 
     await quiz.save();
 
+    // Check for test mode (either development or explicitly requested)
+    const isTestMode = process.env.NODE_ENV === 'development' || req.query.testMode === 'true';
+
     // Format response
     const updatedQuestion = {
       questionIndex: parseInt(questionIndex),
@@ -412,7 +424,7 @@ exports.updateQuestion = async (req, res) => {
       options: quiz.questions[questionIndex].options.map(opt => ({
         id: opt._id,
         text: opt.text,
-        ...(process.env.NODE_ENV === 'development' && { isCorrect: opt.isCorrect })
+        ...(isTestMode && { isCorrect: opt.isCorrect })
       }))
     };
 
@@ -535,11 +547,76 @@ exports.getQuizReview = async (req, res) => {
       },
       questions: reviewData
     });
-
   } catch (error) {
     console.error('Get quiz review error:', error);
     res.status(500).send({ 
       message: 'Error fetching quiz review', 
+      error: error.message 
+    });
+  }
+};
+
+// Function to get a quiz with all answers (for development/testing)
+exports.getQuizWithAnswers = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+    const quiz = await Quiz.findOne({ quiz_id: quizId });
+    
+    if (!quiz) {
+      return res.status(404).send({ message: 'Quiz not found' });
+    }
+
+    // Format questions with correct answers always visible
+    const formattedQuestions = quiz.questions.map((q, index) => ({
+      questionIndex: index,
+      question: q.question,
+      options: q.options.map(opt => ({
+        id: opt._id,
+        text: opt.text,
+        isCorrect: opt.isCorrect
+      }))
+    }));
+
+    res.status(200).send({
+      quizId: quiz.quiz_id,
+      title: quiz.quiz_title,
+      totalQuestions: quiz.questions.length,
+      questions: formattedQuestions,
+      note: "This endpoint is for development and testing purposes only"
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).send({ message: 'Error fetching questions with answers', error: error.message });
+  }
+};
+
+// Function to get all quizzes for the current user
+exports.getAllQuizzes = async (req, res) => {
+  try {
+    // Find all quizzes created by the current user
+    const quizzes = await Quiz.find({ created_by: req.user._id });
+    
+    // Format the response
+    const formattedQuizzes = quizzes.map(quiz => ({
+      quizId: quiz.quiz_id,
+      title: quiz.quiz_title,
+      totalQuestions: quiz.questions.length,
+      createdAt: quiz.createdAt,
+      updatedAt: quiz.updatedAt,
+      source: {
+        fileOcrId: quiz.source?.fileOcrId,
+        extractedTextSegmentPreview: quiz.source?.extractedTextSegment?.substring(0, 100) + '...'
+      }
+    }));
+
+    res.status(200).send({
+      count: quizzes.length,
+      quizzes: formattedQuizzes
+    });
+  } catch (error) {
+    console.error('Error fetching all quizzes:', error);
+    res.status(500).send({ 
+      message: 'Error fetching quizzes', 
       error: error.message 
     });
   }
