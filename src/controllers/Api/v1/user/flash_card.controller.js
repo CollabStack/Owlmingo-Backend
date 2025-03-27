@@ -369,6 +369,43 @@ class FlashCardController {
             return errorResponse(res, error.message);
         }
     }
+
+    static async updateCard(req, res) {
+        try {
+            const userId = req.user._id;
+            const { globalId, cardId } = req.params;
+            const { front, back, category, difficulty, status, nextReviewDate } = req.body;
+
+            // Validate required fields
+            if (!front && !back && !category && !difficulty && !status) {
+                return errorResponse(res, 'At least one field to update is required', 400);
+            }
+
+            const updateData = {
+                cardId,
+                ...(front && { front }),
+                ...(back && { back }),
+                ...(category && { category }),
+                ...(difficulty && { difficulty }),
+                ...(status && { status }),
+                ...(nextReviewDate && { nextReviewDate })
+            };
+
+            const flashCard = await FlashCardService.updateFlashCardFlexible(userId, globalId, updateData);
+            
+            if (!flashCard) {
+                return errorResponse(res, 'Flash card or specific card not found', 404);
+            }
+
+            // Find the updated card in the response
+            const updatedCard = flashCard.cards.find(c => c._id.toString() === cardId);
+            
+            return successResponse(res, updatedCard, 'Card updated successfully');
+        } catch (error) {
+            console.error('Update card error:', error);
+            return errorResponse(res, error.message);
+        }
+    }
 }
 
 module.exports = FlashCardController;

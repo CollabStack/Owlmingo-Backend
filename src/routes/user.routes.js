@@ -106,6 +106,8 @@ privateRouter.get('/flashcards/:globalId', FlashCardController.getAllFlashCard);
 privateRouter.get('/flashcards/:flashCardId/cards/:cardId', FlashCardController.getSpecificCard); 
 privateRouter.get('/flashcards', FlashCardController.getAllFlashCards);
 privateRouter.put('/flashcards/:globalId', FlashCardController.updateFlashCard);
+// Add new endpoint for updating a specific card
+privateRouter.put('/flashcards/:globalId/cards/:cardId', FlashCardController.updateCard);
 privateRouter.delete('/flashcards/:globalId', FlashCardController.deleteFlashCard);
 privateRouter.delete('/flashcards/:globalId/cards/:cardId', FlashCardController.deleteSpecificCard); 
 
