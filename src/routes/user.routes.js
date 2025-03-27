@@ -121,6 +121,17 @@ privateRouter.post(
     FlashCardController.uploadBackImage
 );
 
+// Add these new routes for removing images
+privateRouter.delete(
+    '/flashcards/:globalId/cards/:cardId/images/front',
+    FlashCardController.removeFrontImage
+);
+
+privateRouter.delete(
+    '/flashcards/:globalId/cards/:cardId/images/back',
+    FlashCardController.removeBackImage
+);
+
 // Add route for sharing flash cards
 privateRouter.put('/flashcards/:globalId/share', FlashCardController.toggleShareFlashCard);
 

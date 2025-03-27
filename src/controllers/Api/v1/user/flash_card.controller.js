@@ -283,6 +283,32 @@ class FlashCardController {
         }
     }
 
+    static async removeFrontImage(req, res) {
+        try {
+            const userId = req.user._id;
+            const { globalId, cardId } = req.params;
+
+            const flashCard = await FlashCardService.removeCardImage(userId, globalId, cardId, 'front');
+            return successResponse(res, flashCard, 'Front image removed successfully');
+        } catch (error) {
+            console.error('Remove front image error:', error);
+            return errorResponse(res, error.message);
+        }
+    }
+
+    static async removeBackImage(req, res) {
+        try {
+            const userId = req.user._id;
+            const { globalId, cardId } = req.params;
+
+            const flashCard = await FlashCardService.removeCardImage(userId, globalId, cardId, 'back');
+            return successResponse(res, flashCard, 'Back image removed successfully');
+        } catch (error) {
+            console.error('Remove back image error:', error);
+            return errorResponse(res, error.message);
+        }
+    }
+
     static async examCard(req, res) {
         try {
             const userId = req.user._id;

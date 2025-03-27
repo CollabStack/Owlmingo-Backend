@@ -538,6 +538,39 @@ class FlashCardService {
         }
     }
 
+    static async removeCardImage(userId, globalId, cardId, side) {
+        try {
+            const query = {
+                created_by: userId,
+                'cards._id': cardId
+            };
+
+            // Check if globalId is a valid MongoDB ObjectId
+            if (globalId.match(/^[0-9a-fA-F]{24}$/)) {
+                query._id = globalId;
+            } else {
+                query.globalId = globalId;
+            }
+
+            const updateField = side === 'front' ? 'cards.$.frontImage' : 'cards.$.backImage';
+            
+            const flashCard = await FlashCard.findOneAndUpdate(
+                query,
+                { $set: { [updateField]: null } },
+                { new: true }
+            );
+
+            if (!flashCard) {
+                throw new Error('Flash card or card not found');
+            }
+
+            return flashCard;
+        } catch (error) {
+            console.error(`Error in removeCardImage (${side}):`, error);
+            throw error;
+        }
+    }
+
     static async evaluateAnswer(userId, globalId, cardId, userAnswer) {
         try {
             const flashCard = await FlashCard.findOne({
