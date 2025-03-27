@@ -18,7 +18,9 @@
   "description": "",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.735.0",
-    "axios": "^1.6.0",
+    "@paypal/checkout-server-sdk": "^1.0.3",
+    "axios": "^1.7.9",
+
     "bcryptjs": "^2.4.3",
     "connect-mongo": "5.1.0",
     "cors": "^2.8.5",

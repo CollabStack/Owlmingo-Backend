@@ -16,7 +16,7 @@ const { googleLogin, googleCallback, googleSuccess } = require('../controllers/A
 const SummaryController = require('../controllers/Api/v1/user/summary.controller');
 const FlashCardController = require('../controllers/Api/v1/user/flash_card.controller');
 const FlashCardSessionController = require('../controllers/Api/v1/user/flash_card_session.controller');
-
+const {payment, capture} = require('../controllers/Api/v1/user/paypal.controller');
 
 // Public Routes
 router.post('/register', authController.register);
@@ -54,6 +54,9 @@ router.get('/github/callback', githubController.githubCallback, githubController
 
 router.get('/plans', getPlans);
 router.get('/plans/:id', getPlan);
+
+// Public route for shared flashcards
+router.get('/shared/flashcards/:globalId', FlashCardController.getSharedFlashCard);
 
 // Private Routes (need auth)
 const privateRouter = express.Router();
@@ -135,10 +138,8 @@ privateRouter.delete(
 // Add route for sharing flash cards
 privateRouter.put('/flashcards/:globalId/share', FlashCardController.toggleShareFlashCard);
 
+privateRouter.post('/create-order', payment);
+privateRouter.post('/capture-order', capture);
 // Set prefix for private routes
 router.use('/auth', privateRouter);
-
-// Public route for shared flashcards
-router.get('/shared/flashcards/:globalId', FlashCardController.getSharedFlashCard);
-
 module.exports = router;
