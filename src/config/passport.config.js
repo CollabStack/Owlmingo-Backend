@@ -13,7 +13,9 @@ passport.use(
     {
       clientID: clientID,
       clientSecret: clientSecret,
-      callbackURL: githubCallbackURL,
+      // callbackURL: githubCallbackURL,
+      callbackURL: githubCallbackURL + '?login=true', // Force login prompt
+
     },
     (accessToken, refreshToken, profile, done) => {
       return done(null, profile);
