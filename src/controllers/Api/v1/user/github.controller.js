@@ -55,6 +55,10 @@ const githubCallback = (req, res, next) => {
         }
 
         try {
+            console.log('========================= User from GitHub ==========================='); // Log the user object for debugging
+            console.log(user);
+            console.log('========================= User from GitHub ==========================='); // Log the user object for debugging
+
             // Check if the user has an email available
             const userEmail = user.emails && user.emails.length > 0 ? user.emails[0].value : null;
 
