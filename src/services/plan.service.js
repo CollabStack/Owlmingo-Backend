@@ -1,11 +1,14 @@
 const Plan = require("../models/plan.model");
 
-createPlanSV = async (plan, price, duration, is_popular, is_active) => {
+createPlanSV = async ( plan, price, duration, total_price, is_annual, description, is_popular, is_active) => {
     try {
         const newPlan = await Plan.create({
             plan,
             price,
             duration,
+            total_price,
+            is_annual,
+            description,
             is_popular,
             is_active,
         });

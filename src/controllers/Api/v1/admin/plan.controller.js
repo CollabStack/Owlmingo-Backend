@@ -22,9 +22,9 @@ const getPlan = async (req, res) => {
 
 const createPlan = async (req, res) => {
     try {
-        const { plan, price, duration, is_popular, is_active } = req.body;
+        const { plan, price, duration, total_price, is_annual, description, is_popular, is_active } = req.body;
 
-        const newPlan = await PlanService.createPlanSV(plan, price, duration, is_popular, is_active);
+        const newPlan = await PlanService.createPlanSV(plan, price, duration, total_price, is_annual, description, is_popular, is_active);
         successResponse(res, newPlan, 'Plan created successfully');
     } catch (error) {
         errorResponse(res, error.message || 'Internal server error');
