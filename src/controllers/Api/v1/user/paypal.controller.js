@@ -3,6 +3,9 @@ const paypal = require('@paypal/checkout-server-sdk')
 const paypalClient = require("../../../../config/paypal");
 
 const payment = async (req, res) => {
+    console.log("==================PAYPAL PAYMENT===================");
+    console.log(req.body);
+    console.log("===================================================");
     const { amount, userId, planId, price } = req.body;
     
     // Store transaction details in the database with status 'PENDING'
