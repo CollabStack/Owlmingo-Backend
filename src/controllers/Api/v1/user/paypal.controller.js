@@ -1,13 +1,21 @@
 const { successResponse, errorResponse } = require('../../baseAPI.controller');
-const paypal = require('@paypal/checkout-server-sdk')
+const paypal = require('@paypal/checkout-server-sdk');
 const paypalClient = require("../../../../config/paypal");
 
+// Assuming your authentication middleware attaches the user to req.user
 const payment = async (req, res) => {
     console.log("==================PAYPAL PAYMENT===================");
     console.log(req.body);
     console.log("===================================================");
-    const { amount, userId, planId, price } = req.body;
-    
+
+    // Get userId from the authenticated request object instead of req.body
+    const { amount, planId, price } = req.body;
+    const userId = req.user.id; // Now using req.user from your auth middleware
+    console.log("Amount: ", amount);
+    console.log("Plan ID: ", planId);
+    console.log("Price: ", price);
+    console.log("User ID: ", userId);
+    console.log("===================================================");
     // Store transaction details in the database with status 'PENDING'
     let transaction;
     try {
@@ -45,7 +53,7 @@ const payment = async (req, res) => {
     }
 };
 
-const  capture = async (req, res) => {
+const capture = async (req, res) => {
     const request = new paypal.orders.OrdersCaptureRequest(req.body.orderID);
 
     try {
@@ -55,7 +63,6 @@ const  capture = async (req, res) => {
         errorResponse(res, error.message);
     }
 };
-
 
 module.exports = {
     payment,
