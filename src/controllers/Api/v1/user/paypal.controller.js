@@ -1,7 +1,7 @@
 const { successResponse, errorResponse } = require('../../baseAPI.controller');
 const paypal = require('@paypal/checkout-server-sdk');
 const paypalClient = require("../../../../config/paypal");
-const Payment = require('../../../../models/payment.model'); // Adjust the path as necessary
+const Payment = require('../../../../models/payment.model');
 
 // PayPal payment creation
 const payment = async (req, res) => {
@@ -59,7 +59,7 @@ const payment = async (req, res) => {
     }
 };
 
-// PayPal order capture
+// PayPal capture after user approves
 const capture = async (req, res) => {
     const request = new paypal.orders.OrdersCaptureRequest(req.body.orderID);
 
@@ -67,6 +67,7 @@ const capture = async (req, res) => {
         const capture = await paypalClient.execute(request);
         successResponse(res, capture);
     } catch (error) {
+        console.error("Capture Error:", error);
         errorResponse(res, error.message);
     }
 };
