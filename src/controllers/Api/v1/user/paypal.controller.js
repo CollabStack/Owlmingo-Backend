@@ -3,35 +3,39 @@ const paypal = require('@paypal/checkout-server-sdk');
 const paypalClient = require("../../../../config/paypal");
 const Payment = require('../../../../models/payment.model'); // Adjust the path as necessary
 
-// Assuming your authentication middleware attaches the user to req.user
+// PayPal payment creation
 const payment = async (req, res) => {
     console.log("==================PAYPAL PAYMENT===================");
     console.log(req.body);
     console.log("===================================================");
 
-    // Get userId from the authenticated request object instead of req.body
     const { amount, planId, price } = req.body;
-    const userId = req.user.id; // Now using req.user from your auth middleware
+    const userId = req.user.id;
     console.log("Amount: ", amount);
     console.log("Plan ID: ", planId);
     console.log("Price: ", price);
     console.log("User ID: ", userId);
     console.log("===================================================");
-    // Store transaction details in the database with status 'PENDING'
+
+    // Step 1: Store transaction in DB with status 'PENDING'
     let transaction;
     try {
-        // Assuming you have a Transaction model imported from your models folder
-        transaction = await Payment.create({
+        transaction = new Payment({
             userId,
             amount,
             planId,
             price,
             status: 'PENDING'
+            // paypalOrderId will be added after PayPal order is created
         });
+
+        await transaction.save();
     } catch (dbError) {
+        console.error("DB Error:", dbError);
         return errorResponse(res, 'Failed to store transaction information');
     }
-    
+
+    // Step 2: Create PayPal order
     const request = new paypal.orders.OrdersCreateRequest();
     request.requestBody({
         intent: 'CAPTURE',
@@ -45,15 +49,17 @@ const payment = async (req, res) => {
 
     try {
         const order = await paypalClient.execute(request);
-        // Optionally update the stored transaction with PayPal order id
         transaction.paypalOrderId = order.result.id;
         await transaction.save();
+
         successResponse(res, order);
     } catch (error) {
+        console.error("PayPal Error:", error);
         errorResponse(res, error.message);
     }
 };
 
+// PayPal order capture
 const capture = async (req, res) => {
     const request = new paypal.orders.OrdersCaptureRequest(req.body.orderID);
 

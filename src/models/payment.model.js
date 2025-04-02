@@ -21,7 +21,7 @@ const paymentSchema = new mongoose.Schema({
     },
     paypalOrderId: {
         type: String, 
-        required: true
+        required: false 
     },
     status: {
         type: String,
