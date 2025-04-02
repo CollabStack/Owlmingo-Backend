@@ -1,6 +1,7 @@
 const { successResponse, errorResponse } = require('../../baseAPI.controller');
 const paypal = require('@paypal/checkout-server-sdk');
 const paypalClient = require("../../../../config/paypal");
+const Payment = require('../../../../models/payment.model'); // Adjust the path as necessary
 
 // Assuming your authentication middleware attaches the user to req.user
 const payment = async (req, res) => {
