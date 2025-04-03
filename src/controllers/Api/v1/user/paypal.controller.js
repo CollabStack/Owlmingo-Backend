@@ -13,7 +13,6 @@ const payment = async (req, res) => {
     const userId = req.user.id;
     console.log("Amount: ", amount);
     console.log("Plan ID: ", planId);
-    console.log("Price: ", price);
     console.log("User ID: ", userId);
     console.log("===================================================");
 
@@ -24,7 +23,6 @@ const payment = async (req, res) => {
             userId,
             amount,
             planId,
-            price,
             status: 'PENDING'
             // paypalOrderId will be added after PayPal order is created
         });

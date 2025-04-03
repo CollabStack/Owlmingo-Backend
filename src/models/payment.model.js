@@ -15,10 +15,6 @@ const paymentSchema = new mongoose.Schema({
         ref: 'Plan',
         required: true
     },
-    price: {
-        type: Number,
-        required: true
-    },
     paypalOrderId: {
         type: String, 
         required: false 
