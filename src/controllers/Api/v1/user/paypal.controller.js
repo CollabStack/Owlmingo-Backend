@@ -49,13 +49,16 @@ const payment = async (req, res) => {
         const order = await paypalClient.execute(request);
         transaction.paypalOrderId = order.result.id;
         await transaction.save();
+        console.log("===================PAYPAL ORDER===================");
+        console.log("PayPal Order ID:", order.result.id);
+        console.log("==================================================");
         res.json({ id: order.result.id })
 
         // successResponse(res, order);
     } catch (error) {
         console.error("PayPal Error:", error);
         // errorResponse(res, error.message);
-        res.status(500).send(err)
+        res.status(500).send(err);
 
     }
 };
