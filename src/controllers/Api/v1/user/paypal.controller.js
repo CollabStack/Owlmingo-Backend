@@ -48,8 +48,10 @@ const payment = async (req, res) => {
     try {
         const order = await paypalClient.execute(request);
         transaction.paypalOrderId = order.result.id;
+        console.info("PayPal Order ID:", order);
         await transaction.save();
         console.log("===================PAYPAL ORDER===================");
+        console.log(order);
         console.log("PayPal Order ID:", order.result.id);
         console.log("==================================================");
         res.json({ id: order.result.id })
