@@ -59,26 +59,33 @@ const payment = async (req, res) => {
 
 // Capture PayPal Order
 const capture = async (req, res) => {
-  const request = new paypal.orders.OrdersCaptureRequest(req.body.orderID);
+    const request = new paypal.orders.OrdersCaptureRequest(req.body.orderID);
 
-  try {
-    const capture = await paypalClient.execute(request);
-    console.log("=========== PAYPAL CAPTURE ===========");
-    console.log(capture);
+    try {
+        const captureResponse = await paypalClient.execute(request);
+        console.log("=========== PAYPAL CAPTURE ===========");
+        console.log(captureResponse);
 
-    payment = await Payment.findOne({ paypalOrderId: req.body.orderID });
-    payment.status = 'COMPLETED';
-    await payment.save();
-    
-    // return successResponse(res, capture);
-    res.json(order.result)
+        // Find payment by paypalOrderId and userId
+        let payment = await Payment.findOne({
+            paypalOrderId: req.body.orderID,
+            userId: req.user.id
+        });
+        
+        if (!payment) {
+            return res.status(404).json({ message: 'Payment not found' });
+        }
 
-  } catch (error) {
-    console.error("Capture Error:", error);
-    // return errorResponse(res, 'Failed to capture PayPal order');
-    res.status(500).send(err)
+        // Update payment status to COMPLETED
+        payment.status = 'COMPLETED';
+        await payment.save();
+        
+        res.json(captureResponse.result);
 
-  }
+    } catch (error) {
+        console.error("Capture Error:", error);
+        res.status(500).send(error);
+    }
 };
 
 module.exports = {
