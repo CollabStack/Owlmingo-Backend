@@ -22,9 +22,11 @@ const payment = async (req, res) => {
       status: 'PENDING'
     });
     await transaction.save();
+    res.json({ id: order.result.id })
   } catch (dbError) {
     console.error("DB Error:", dbError);
-    return errorResponse(res, 'Failed to store transaction information');
+    // return errorResponse(res, 'Failed to store transaction information');
+    res.status(500).send(err)
   }
 
   // Step 2: Create PayPal Order
@@ -45,10 +47,12 @@ const payment = async (req, res) => {
     await transaction.save();
     console.log("=========== PAYPAL ORDER CREATED ===========");
     console.log("Order ID:", order.result.id);
-    return successResponse(res, { id: order.result.id });
+    // return successResponse(res, { id: order.result.id });
+    res.json(order.result)
+
   } catch (error) {
     console.error("PayPal Error:", error);
-    return errorResponse(res, 'Failed to create PayPal order');
+    res.status(500).send(err)
   }
 };
 
