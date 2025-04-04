@@ -22,7 +22,6 @@ const payment = async (req, res) => {
       status: 'PENDING'
     });
     await transaction.save();
-    res.json({ id: order.result.id })
   } catch (dbError) {
     console.error("DB Error:", dbError);
     // return errorResponse(res, 'Failed to store transaction information');
@@ -48,7 +47,9 @@ const payment = async (req, res) => {
     console.log("=========== PAYPAL ORDER CREATED ===========");
     console.log("Order ID:", order.result.id);
     // return successResponse(res, { id: order.result.id });
-    res.json(order.result)
+    // res.json(order.result)
+    res.json({ id: order.result.id })
+
 
   } catch (error) {
     console.error("PayPal Error:", error);
@@ -64,10 +65,14 @@ const capture = async (req, res) => {
     const capture = await paypalClient.execute(request);
     console.log("=========== PAYPAL CAPTURE ===========");
     console.log(capture);
-    return successResponse(res, capture);
+    // return successResponse(res, capture);
+    res.json(order.result)
+
   } catch (error) {
     console.error("Capture Error:", error);
-    return errorResponse(res, 'Failed to capture PayPal order');
+    // return errorResponse(res, 'Failed to capture PayPal order');
+    res.status(500).send(err)
+
   }
 };
 
