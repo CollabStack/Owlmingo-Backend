@@ -9,7 +9,7 @@ const payment = async (req, res) => {
   console.log(req.body);
   console.log("==============================================");
 
-  const { amount, planId, price } = req.body;
+  const { amount, planId } = req.body;
   const userId = req.user.id;
 
   // Step 1: Store transaction in DB
