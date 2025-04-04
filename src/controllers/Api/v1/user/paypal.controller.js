@@ -65,6 +65,11 @@ const capture = async (req, res) => {
     const capture = await paypalClient.execute(request);
     console.log("=========== PAYPAL CAPTURE ===========");
     console.log(capture);
+
+    payment = await Payment.findOne({ paypalOrderId: req.body.orderID });
+    payment.status = 'COMPLETED';
+    await payment.save();
+    
     // return successResponse(res, capture);
     res.json(order.result)
 
