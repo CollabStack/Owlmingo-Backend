@@ -1,10 +1,10 @@
-exports.successResponse = (res, data, message) => {
+exports.successResponse = (res, data, message, statusCode = 200) => {
     const response = {
         status: 'success',
         data: data,
         message: message,
     };
-    return res.status(200).json(response);
+    return res.status(statusCode).json(response);
 };
 
 exports.errorResponse = (res, message, statusCode = 400) => {
