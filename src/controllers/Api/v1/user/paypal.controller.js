@@ -5,12 +5,9 @@ const Payment = require('../../../../models/payment.model');
 
 // Create PayPal Order
 const payment = async (req, res) => {
-  console.log("=========== PAYPAL PAYMENT REQUEST ===========");
-  console.log(req.body);
-  console.log("==============================================");
-
-  const { amount, planId } = req.body;
+  const { amount, planId, duration} = req.body;
   const userId = req.user.id;
+  const onDate = Date.now() + duration * 24 * 60 * 60 * 1000; // expiration timestamp based on duration (days)
 
   // Step 1: Store transaction in DB
   let transaction;
@@ -19,6 +16,7 @@ const payment = async (req, res) => {
       userId,
       amount,
       planId,
+      expiration: onDate, 
       status: 'PENDING'
     });
     await transaction.save();
@@ -44,10 +42,7 @@ const payment = async (req, res) => {
     const order = await paypalClient.execute(request);
     transaction.paypalOrderId = order.result.id;
     await transaction.save();
-    console.log("=========== PAYPAL ORDER CREATED ===========");
-    console.log("Order ID:", order.result.id);
-    // return successResponse(res, { id: order.result.id });
-    // res.json(order.result)
+
     res.json({ id: order.result.id })
 
 
@@ -63,8 +58,6 @@ const capture = async (req, res) => {
 
     try {
         const captureResponse = await paypalClient.execute(request);
-        console.log("=========== PAYPAL CAPTURE ===========");
-        console.log(captureResponse);
 
         // Find payment by paypalOrderId and userId
         let payment = await Payment.findOne({
