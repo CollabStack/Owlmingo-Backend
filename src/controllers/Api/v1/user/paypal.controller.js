@@ -7,6 +7,7 @@ const checkSubscription = async (req, res) => {
   const userId = req.user.id;
   const planId = req.body.planId;
   const currentDate = new Date();
+  console.log("Request Body", req.body);
   console.log("================== ======================");
   console.log("userId", userId);
   console.log("planId", planId);
