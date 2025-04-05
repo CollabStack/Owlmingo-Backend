@@ -17,7 +17,7 @@ const checkSubscription = async (req, res) => {
 
     if (payment) {
       // return res.status(200).json({ message: 'Subscription is active' });
-      return successResponse(res, null, 'Subscription is active');
+      return successResponse(res, null, 'Subscription is active', 201);
     } else {
       // return res.status(404).json({ message: 'No active subscription found' });
       return successResponse(res, null,'No active subscription found');
