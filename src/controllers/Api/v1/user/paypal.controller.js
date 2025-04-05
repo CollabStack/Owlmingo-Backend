@@ -7,6 +7,10 @@ const checkSubscription = async (req, res) => {
   const userId = req.user.id;
   const planId = req.body.planId;
   const currentDate = new Date();
+  console.log("================== ======================");
+  console.log("userId", userId);
+  console.log("planId", planId);
+  console.log("currentDate", currentDate);
 
   try {
     const payment = await Payment.findOne({
@@ -14,6 +18,8 @@ const checkSubscription = async (req, res) => {
       planId,
       expiration: { $gt: currentDate } // Check if the subscription is still valid
     });
+    console.log("Payment", payment);
+    console.log("================== ======================");
 
     if (payment) {
       // return res.status(200).json({ message: 'Subscription is active' });
