@@ -17,8 +17,8 @@ const checkSubscription = async (req, res) => {
     const payment = await Payment.findOne({
       userId,
       planId,
-      expiration: { $gt: currentDate } // Check if the subscription is still valid
-    });
+      expiration: { $gt: currentDate }
+    }).sort({ createdAt: -1 });
     console.log("Payment", payment);
     console.log("================== ======================");
 
