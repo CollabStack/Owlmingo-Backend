@@ -20,7 +20,7 @@ const paymentSchema = new mongoose.Schema({
         required: false 
     },
     expiration: {
-        type: timestamps,
+        type: Date,
         required: true
     },
     status: {
