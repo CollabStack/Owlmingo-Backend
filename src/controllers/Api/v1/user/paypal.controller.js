@@ -3,6 +3,33 @@ const paypal = require('@paypal/checkout-server-sdk');
 const paypalClient = require("../../../../config/paypal");
 const Payment = require('../../../../models/payment.model');
 
+const checkSubscription = async (req, res) => {
+  const userId = req.user.id;
+  const planId = req.body.planId;
+  const currentDate = new Date();
+
+  try {
+    const payment = await Payment.findOne({
+      userId,
+      planId,
+      expiration: { $gt: currentDate } // Check if the subscription is still valid
+    });
+
+    if (payment) {
+      // return res.status(200).json({ message: 'Subscription is active' });
+      return successResponse(res, null, 'Subscription is active');
+    } else {
+      // return res.status(404).json({ message: 'No active subscription found' });
+      return successResponse(res, null,'No active subscription found');
+    }
+  } catch (error) {
+    console.error("DB Error:", error);
+    // return res.status(500).json({ message: 'Internal server error' });
+    return errorResponse(res, 'Internal server error')
+  }
+
+}
+
 // Create PayPal Order
 const payment = async (req, res) => {
   const { amount, planId, duration} = req.body;
@@ -83,5 +110,6 @@ const capture = async (req, res) => {
 
 module.exports = {
   payment,
-  capture
+  capture,
+  checkSubscription
 };

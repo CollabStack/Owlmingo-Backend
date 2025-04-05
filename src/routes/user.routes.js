@@ -16,7 +16,7 @@ const { googleLogin, googleCallback, googleSuccess } = require('../controllers/A
 const SummaryController = require('../controllers/Api/v1/user/summary.controller');
 const FlashCardController = require('../controllers/Api/v1/user/flash_card.controller');
 const FlashCardSessionController = require('../controllers/Api/v1/user/flash_card_session.controller');
-const {payment, capture} = require('../controllers/Api/v1/user/paypal.controller');
+const {payment, capture, checkSubscription} = require('../controllers/Api/v1/user/paypal.controller');
 
 // Public Routes
 router.post('/register', authController.register);
@@ -114,34 +114,22 @@ privateRouter.delete('/flashcards/:globalId/cards/:cardId', FlashCardController.
 privateRouter.post('/flashcards/:globalId/cards/:cardId/exam', FlashCardController.examCard);
 
 // Remove the multipleUpload configuration and use single file upload
-privateRouter.post(
-    '/flashcards/:globalId/cards/:cardId/images/front',
-    uploadMiddleware,
-    FlashCardController.uploadFrontImage
-);
+privateRouter.post('/flashcards/:globalId/cards/:cardId/images/front',uploadMiddleware,FlashCardController.uploadFrontImage);
 
-privateRouter.post(
-    '/flashcards/:globalId/cards/:cardId/images/back',
-    uploadMiddleware,
-    FlashCardController.uploadBackImage
-);
+privateRouter.post('/flashcards/:globalId/cards/:cardId/images/back',uploadMiddleware, FlashCardController.uploadBackImage );
 
 // Add these new routes for removing images
-privateRouter.delete(
-    '/flashcards/:globalId/cards/:cardId/images/front',
-    FlashCardController.removeFrontImage
-);
+privateRouter.delete( '/flashcards/:globalId/cards/:cardId/images/front', FlashCardController.removeFrontImage);
 
-privateRouter.delete(
-    '/flashcards/:globalId/cards/:cardId/images/back',
-    FlashCardController.removeBackImage
-);
+privateRouter.delete( '/flashcards/:globalId/cards/:cardId/images/back', FlashCardController.removeBackImage);
 
 // Add route for sharing flash cards
 privateRouter.put('/flashcards/:globalId/share', FlashCardController.toggleShareFlashCard);
 
 privateRouter.post('/create-order', payment);
 privateRouter.post('/capture-order', capture);
+
+privateRouter.post('/check-subscription', checkSubscription);
 // Set prefix for private routes
 router.use('/auth', privateRouter);
 module.exports = router;
