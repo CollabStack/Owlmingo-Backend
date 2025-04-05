@@ -10,6 +10,17 @@ const cors = require('cors');
 // Initialize Express App first
 const app = express();
 
+// Trust Heroku's proxy
+app.enable('trust proxy');
+
+// Redirect HTTP to HTTPS in production
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production' && req.headers['x-forwarded-proto'] !== 'https') {
+    return res.redirect(`https://${req.headers.host}${req.url}`);
+  }
+  next();
+});
+
 // Session secret
 const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
 
