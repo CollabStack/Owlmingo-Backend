@@ -9,7 +9,7 @@ const payment = async (req, res) => {
   const userId = req.user.id;
   const onDate = Date.now() + duration * 24 * 60 * 60 * 1000; // expiration timestamp based on duration (days)
 
-  // Step 1: Store transaction in DB
+  // Step 1: Store transaction in DB 
   let transaction;
   try {
     transaction = new Payment({
