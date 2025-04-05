@@ -3,7 +3,7 @@ const PlanService = require('../../../../services/plan.service');
 
 const getPlans = async (req, res) => {
     try {
-        const plans = await PlanService.getPlansSV();
+        const plans = await PlanService.getPlansAdminSV();
         successResponse(res, plans, 'Plans fetched successfully');
     } catch (error) {
         errorResponse(res, error.message || 'Internal server error');

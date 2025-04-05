@@ -27,6 +27,15 @@ getPlansSV = async () => {
     }
 };
 
+getPlansAdminSV = async () => {
+    try {
+        const plans = await Plan.find({});
+        return plans;
+    } catch (error) {
+        throw error;
+    }
+};
+
 
 getPlanSV = async (global_id) => {
     try {
