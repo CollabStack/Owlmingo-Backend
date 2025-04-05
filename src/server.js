@@ -21,6 +21,8 @@ app.use((req, res, next) => {
   next();
 });
 
+
+
 // Session secret
 const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
 
