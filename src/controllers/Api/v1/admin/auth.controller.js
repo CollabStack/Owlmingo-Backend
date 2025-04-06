@@ -1,6 +1,7 @@
 const { successResponse, errorResponse } = require('../../baseAPI.controller');
 const authService = require('../../../../services/auth.service');
 const { refreshToken } = require('../../../../utils/jwt.util');
+const User = require('../../../../models/user.model');
 
 register = async (req, res) => {
     try {
