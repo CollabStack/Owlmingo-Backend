@@ -28,6 +28,11 @@ const userSchema = new mongoose.Schema(
         },
       ],
     },
+    profile_url: {
+      type: String,
+      required: false,
+      default: null,
+    },
     email: {
       type: String,
       required: false,

@@ -17,6 +17,7 @@ const SummaryController = require('../controllers/Api/v1/user/summary.controller
 const FlashCardController = require('../controllers/Api/v1/user/flash_card.controller');
 const FlashCardSessionController = require('../controllers/Api/v1/user/flash_card_session.controller');
 const {payment, capture, checkSubscription} = require('../controllers/Api/v1/user/paypal.controller');
+const { updateUserInfo } = require('../controllers/Api/v1/user/user.controller'); // Import the new controller
 
 // Public Routes
 router.post('/register', authController.register);
@@ -130,6 +131,9 @@ privateRouter.post('/create-order', payment);
 privateRouter.post('/capture-order', capture);
 
 privateRouter.post('/check-subscription', checkSubscription);
+
+privateRouter.put('/update-user-information', uploadMiddleware, updateUserInfo);
+
 // Set prefix for private routes
 router.use('/auth', privateRouter);
 module.exports = router;
