@@ -19,12 +19,10 @@ const updateUserInfo = async (req, res) => {
             if (!fileUrl) {
                 return errorResponse(res, 'File upload failed', 500);
             }
-            console.log('fileUrl', fileUrl);
             user.profile_url = fileUrl;
         }
 
         if (username) {
-            console.log("username", username);
             user.username = username;
         }
 
