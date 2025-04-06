@@ -1,5 +1,6 @@
 const { successResponse, errorResponse } = require('../../baseAPI.controller');
 const authService = require('../../../../services/auth.service');
+const User = require('../../../../models/user.model');
 const { refreshToken } = require('../../../../utils/jwt.util');
 
 register = async (req, res) => {
@@ -33,14 +34,24 @@ login = async (req, res) => {
     }
 };
 
-refreshUserToken = async (req, res) => {
+const refreshUserToken = async (req, res) => {
     try {
-        const token = req.header('Authorization').replace('Bearer ', '');
+        const token = req.header('Authorization')?.replace('Bearer ', '');
         if (!token) {
             return errorResponse(res, 'Token not provided');
         }
-        const newToken = await refreshToken(token);
-        successResponse(res, { token: newToken }, 'Token refreshed successfully');
+        const newToken = refreshToken(token);
+        
+        const user = await User.findById(req.user.id);
+
+        if (!user) {
+            return errorResponse(res, 'User not found');
+        }
+        // Remove the password field before sending the user object in the response
+        const safeUser = user.toObject ? user.toObject() : { ...user };
+        delete safeUser.password;
+
+        successResponse(res, { token: newToken, user: safeUser }, 'Token refreshed successfully');
     } catch (error) {
         errorResponse(res, error);
     }
