@@ -12,6 +12,7 @@ const checkSubscription = async (req, res) => {
     const payment = await Payment.findOne({
       userId,
       planId,
+      status: "COMPLETED",
       expiration: { $gt: currentDate }
     }).sort({ createdAt: -1 });
 

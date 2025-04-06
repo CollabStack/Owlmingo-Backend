@@ -17,7 +17,7 @@ const SummaryController = require('../controllers/Api/v1/user/summary.controller
 const FlashCardController = require('../controllers/Api/v1/user/flash_card.controller');
 const FlashCardSessionController = require('../controllers/Api/v1/user/flash_card_session.controller');
 const {payment, capture, checkSubscription} = require('../controllers/Api/v1/user/paypal.controller');
-const { updateUserInfo, settingChangePassword } = require('../controllers/Api/v1/user/user.controller'); // Import the new controller
+const { updateUserInfo, settingChangePassword, getCurrentPlan } = require('../controllers/Api/v1/user/user.controller'); // Import the new controller
 
 // Public Routes
 router.post('/register', authController.register);
@@ -134,6 +134,7 @@ privateRouter.post('/check-subscription', checkSubscription);
 
 privateRouter.put('/update-information', uploadMiddleware, updateUserInfo);
 privateRouter.put('/settings-change-password', settingChangePassword);
+privateRouter.get('/get-current-plan', getCurrentPlan);
 
 // Set prefix for private routes
 router.use('/auth', privateRouter);
