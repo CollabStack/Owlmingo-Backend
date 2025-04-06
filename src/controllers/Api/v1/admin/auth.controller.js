@@ -40,7 +40,16 @@ refreshUserToken = async (req, res) => {
             return errorResponse(res, 'Token not provided');
         }
         const newToken = await refreshToken(token);
-        successResponse(res, { token: newToken }, 'Token refreshed successfully');
+        const user = await User.findById(req.user.id);
+        if(!user) {
+            return errorResponse(res, 'User not found');
+        }
+
+        // Remove the password field before sending the user object in the response
+        const safeUser = user.toObject ? user.toObject() : { ...user };
+        delete safeUser.password;
+        
+        successResponse(res, { token: newToken , user: safeUser}, 'Token refreshed successfully');
     } catch (error) {
         errorResponse(res, error);
     }
