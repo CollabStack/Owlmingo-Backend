@@ -21,8 +21,8 @@ register = async (req, res) => {
 login = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const token = await authService.login(email, password);
-        successResponse(res, { token }, 'User logged in successfully');
+        const token = await authService.login(email, password, 'admin');
+        successResponse(res, token , 'User logged in successfully');
     } catch (error) {
         if (error.name === "SequelizeUniqueConstraintError") {
             message = error.errors.map((e) => e.message);

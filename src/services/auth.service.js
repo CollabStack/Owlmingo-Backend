@@ -39,9 +39,9 @@ register = async (username, email, password, role) => {
     }
 };
 
-login = async (email, password) => {
+login = async (email, password, role='user') => {
     try {
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email, role });
         if (!user) {
             throw 'User not found';
         }
