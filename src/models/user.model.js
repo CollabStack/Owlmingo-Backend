@@ -58,6 +58,11 @@ const userSchema = new mongoose.Schema(
         },
       ],
     },
+    isActive: {
+      type: Boolean,
+      required: false,
+      default: true,
+    },
     google_id: {
       type: String,
       unique: true,

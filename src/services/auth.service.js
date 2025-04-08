@@ -45,7 +45,9 @@ login = async (email, password, role='user') => {
         if (!user) {
             throw 'User not found';
         }
-
+        if (user.isActive === false) {
+            throw 'User is inactive';
+        }
         // Add verification check
         if (!user.isVerified) {
             throw 'Please verify your email before logging in';
