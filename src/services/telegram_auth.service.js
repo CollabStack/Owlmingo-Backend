@@ -21,6 +21,9 @@ telegramOAuth = async (first_name, last_name, username, telegram_id, ) => {
         const token = jwtUtil.generateToken({ global_id: userData.global_id, role: userData.role });
         return { token, user: userData };
     } catch (error) {
+        console.log("====================== Telegram OAuth Error ======================");
+        console.log("Error: ", error);
+        console.log("===========================================================");
         throw error;
     }
 };
