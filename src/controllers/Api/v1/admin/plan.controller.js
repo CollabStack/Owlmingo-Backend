@@ -1,6 +1,5 @@
 const {successResponse, errorResponse} = require('../../baseAPI.controller');
-const {getPlansAdminSV,getPlanSV,updatePlanSV,togglePlanActivationSV,} = require('../../../../services/plan.service');
-
+const Plan = require('../../../../models/plan.model');
 const getPlans = async (req, res) => {
     try {
         const plans = await getPlansAdminSV();
@@ -12,8 +11,8 @@ const getPlans = async (req, res) => {
 
 const getPlan = async (req, res) => {
     try {
-        const global_id = req.params.id;
-        const plan = await getPlanSV(global_id);
+        const id = req.params.id;
+        const plan = Plan.findOne({ _id: id }); 
         successResponse(res, plan, 'Plan fetched successfully');
     } catch (error) {
         errorResponse(res, error.message || 'Internal server error');
@@ -34,10 +33,14 @@ const createPlan = async (req, res) => {
 const updatePlan = async (req, res) => {
     try {
         const { plan, price, duration, is_popular, is_active } = req.body;
-        const global_id = req.params.id;
+        const id = req.params.id;
 
-        const updatedPlan = await updatePlanSV(global_id, plan, price, duration, is_popular, is_active);
-        successResponse(res, updatedPlan, 'Plan updated successfully');
+        const updatedPlan = await Plan.findOneAndUpdate(
+            { _id: id }, // find by global_id
+            { plan, price, duration, is_popular, is_active }, // update the plan
+            { new: true } // Return the updated document after applied changes
+        );
+            successResponse(res, updatedPlan, 'Plan updated successfully');
     } catch (error) {
         errorResponse(res, error.message || 'Internal server error');
     }
@@ -45,9 +48,13 @@ const updatePlan = async (req, res) => {
 
 const togglePlanActivation = async (req, res) => {
     try {
-        const global_id = req.params.id;
+        const id = req.params.id;
 
-        const updatedPlan = await togglePlanActivationSV(global_id);
+        const updatedPlan = await Plan.findOneAndUpdate(
+            { _id: id }, // find by global_id
+            { $set: { is_active: !is_active } }, // update the plan
+            { new: true } // Return the updated document after applied changes
+        );
         successResponse(res, updatedPlan, 'Plan activation toggled successfully');
     } catch (error) {
         errorResponse(res, error.message || 'Internal server error');
