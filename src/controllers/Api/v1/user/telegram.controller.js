@@ -6,6 +6,10 @@ telegramOAuth = async (req, res) => {
     try {
         const { first_name, last_name, username, telegram_id } = req.body;
         const { token, user } = await telegramAuthService.telegramOAuth(first_name, last_name, username, telegram_id);
+        console.log("===================== Telegram OAuth ======================");
+        console.log("User: ", user);
+        console.log("Token: ", token);
+        console.log("===========================================================");
         successResponse(res, { token, user }, 'User logged in successfully');
     } catch (error) {
         errorResponse(res, error);
