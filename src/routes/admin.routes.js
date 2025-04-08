@@ -5,7 +5,7 @@ const auth = require('../middlewares/auth.middleware');
 const { getPlans, getPlan, createPlan, updatePlan, togglePlanActivation } = require('../controllers/Api/v1/admin/plan.controller');
 const { getAllPayments } = require('../controllers/Api/v1/admin/payment.controller');
 const { getAllUsers, updateUser, activationUser } = require('../controllers/Api/v1/admin/user.controller'); // Assuming you have a user controller for admin
-const { getDashboardData } = require('../controllers/Api/v1/admin/dashboard.controller'); // Assuming you have a dashboard controller
+const { getDashboardData, getPaymentTrend } = require('../controllers/Api/v1/admin/dashboard.controller'); // Assuming you have a dashboard controller
 
 // Public Routes
 router.post('/register', authController.register);
@@ -30,6 +30,8 @@ privateRouter.put('/users/:id', updateUser); // Assuming this is the correct rou
 privateRouter.patch('/users/:id', activationUser); // Assuming this is the correct route for payments
 
 privateRouter.get('/dashboard', getDashboardData); // Assuming this is the correct route for payments
+privateRouter.get('/payment-trend', getPaymentTrend); // Assuming this is the correct route for payments
+
 // Set prefix for private routes
 router.use('/auth', privateRouter);
 
