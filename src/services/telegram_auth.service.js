@@ -15,12 +15,19 @@ const telegramOAuth = async (first_name, last_name, username, telegram_id) => {
         // Construct the username
         const username_format = first_name && last_name ? `${first_name} ${last_name}` : username;
 
+        // Default email if none is provided
+        let email = null; // You can set this to a default value or handle it as needed
+        if (!existingUser && !email) {
+            email = `telegram_${telegram_id}@example.com`;  // Example placeholder email
+        }
+
         // Create a new user if not existing, otherwise use the existing one
         let user;
         if (!existingUser && username_format && telegram_id) {
             user = await User.create({ 
                 username: username_format, 
-                telegram_id 
+                telegram_id,
+                email // Only insert email if it's valid
             });
         } else {
             user = existingUser;
