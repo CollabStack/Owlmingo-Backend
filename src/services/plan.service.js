@@ -62,7 +62,7 @@ updatePlanSV = async (global_id, plan, price, duration, is_popular, is_active) =
     }
 }
 
-togglePlanActivation = async (global_id) => {
+togglePlanActivationSV = async (global_id) => {
     try {
         const plan = await Plan.findOne({ global_id: global_id });
         if (!plan) {
@@ -82,7 +82,8 @@ togglePlanActivation = async (global_id) => {
 module.exports = {
     createPlanSV,
     getPlansSV,
+    getPlansAdminSV,
     getPlanSV,
     updatePlanSV,
-    togglePlanActivation,
+    togglePlanActivationSV,
 };
